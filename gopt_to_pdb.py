@@ -1,3 +1,5 @@
+#!/bin/python
+
 """
 This is a program written by Qianyi Cheng
 at University of Memphis.

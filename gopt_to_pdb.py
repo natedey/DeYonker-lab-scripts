@@ -46,10 +46,10 @@ if __name__ == '__main__':
         xyz_n = dot( xyz_c-c_trans, U ) + ref_trans
         sel_atom = update_xyz(pdb,xyz_n)
         if key == -1:
-            if os.getcwd().split("/")[-1] in ['irc1','irc2']:
-                name = os.getcwd().split("/")[-2]+"-"+os.getcwd().split("/")[-1]+"-out.pdb"
+            if os.path.abspath(args.output).split("/")[-2] in ['irc1','irc2']:
+                name = os.path.abspath(args.output).split("/")[-3]+"-"+os.path.abspath(args.output).split("/")[-2]+"-out.pdb"
             else:
-                name = os.getcwd().split("/")[-1]+"-out.pdb"
+                name = os.path.abspath(args.output).split("/")[-2]+"-out.pdb"
             write_pdb(name,sel_atom)
         else:
             name = args.frame+'.pdb'

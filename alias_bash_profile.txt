@@ -1,0 +1,10 @@
+alias echeck="egrep 'Step number|Done|YES' 1.out | sed 's%SCF Done%\nSCF Done%g' |more"
+alias fdone="egrep 'SCF Done|NO |YES'"
+alias edone="egrep 'SCF Done|NO |YES|Predicted' *.out"
+alias eio="egrep 'Step number|SCF Done|YES|Predicted' *.out"
+alias qsqs='qs | grep `pwd`'
+alias qss="sacct --state=running,pending -u tsuhagia -o state,partition,elapsed%15,timelimit%15,jobid%8,workdir%80,start%30,end,reqmem,reqcpus"
+alias qq='qss | grep `pwd`'
+alias vii='vim 1.inp'
+alias vio='vim 1.out'
+alias qio="plotEnergy.sh"

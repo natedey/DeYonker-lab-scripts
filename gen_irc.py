@@ -80,13 +80,13 @@ def write_input(inp_f,dir1,dir2,irc1,irc2,atom_name,charge,multip,scale):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Write irc inputs')
-    parser.add_argument('-wdir', dest='output_dir', default=os.path.abspath('./'), help='working dir')
-    parser.add_argument('-dir1', dest='dir1', default=os.path.abspath('./irc1'), help='irc1 dir')
-    parser.add_argument('-dir2', dest='dir2', default=os.path.abspath('./irc2'), help='irc2 dir')
-    parser.add_argument('-o', dest='gau_out', default=None, help='output_name')
-    parser.add_argument('-i', dest='gau_inp', default=None, help='input_name')
-    parser.add_argument('-s', dest='scale', type=float,default=0.1, help='scale_factor')
-    parser.add_argument('-n', dest='num_freq', type=int,default=1, help='number_of_mode')
+    parser.add_argument('-wdir', dest='output_dir', default=os.path.abspath('./'), help='working dir, default "current dir"')
+    parser.add_argument('-dir1', dest='dir1', default=os.path.abspath('./irc1'), help='irc1 dir, default irc1')
+    parser.add_argument('-dir2', dest='dir2', default=os.path.abspath('./irc2'), help='irc2 dir, default irc2')
+    parser.add_argument('-o', dest='gau_out', default=None, help='output_name, default 1.out')
+    parser.add_argument('-i', dest='gau_inp', default=None, help='input_name, default 1.inp')
+    parser.add_argument('-s', dest='scale', type=float,default=0.1, help='scale_factor, default 0.1')
+    parser.add_argument('-n', dest='num_freq', type=int,default=1, help='number_of_mode, default first mode')
 
 
     args = parser.parse_args()

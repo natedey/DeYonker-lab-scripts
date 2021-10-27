@@ -86,7 +86,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', dest='gau_out', default=None, help='output_name')
     parser.add_argument('-i', dest='gau_inp', default=None, help='input_name')
     parser.add_argument('-s', dest='scale', type=float,default=0.1, help='scale_factor')
-    parser.add_argument('-n', dest='num_freq', type=int,default=1, help='scale_factor')
+    parser.add_argument('-n', dest='num_freq', type=int,default=1, help='number_of_mode')
 
 
     args = parser.parse_args()

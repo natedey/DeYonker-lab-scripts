@@ -19,7 +19,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 #
-## usage:  python3  ~/GIT_DeYonker/DeYonker-lab-scripts/gopt_pdb_transfer.py -p /home/rhemmati/test_transfer_from_hpc -l ./
+## usage:  python3  ~/GIT_DeYonker/DeYonker-lab-scripts/gopt_pdb_transfer_mod.py -p /home/rhemmati/test_transfer_from_hpc -l ./
 
 
 #!/bin/python

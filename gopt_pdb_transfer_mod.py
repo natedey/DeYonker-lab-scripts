@@ -1,7 +1,7 @@
-# Title:	  gopt_pdb_transfer_mod.py
-# Author:	  Reza Hemmati
-# Created:	12/03/2021
-# Modefied:  12/16/2021
+# Title:    gopt_pdb_transfer_mod.py
+# Author:   Reza Hemmati
+# Created:  12/03/2021
+# Modefied: 12/16/2021
 #
 # Original script: gopt_pdb_transfer.py written by, Thomas Summers
 #

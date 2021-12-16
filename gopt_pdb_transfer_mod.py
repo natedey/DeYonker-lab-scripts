@@ -20,7 +20,11 @@
 #
 #
 ## usage:  python3  ~/GIT_DeYonker/DeYonker-lab-scripts/gopt_pdb_transfer_mod.py -p /home/rhemmati/test_transfer_from_hpc -d ./
-
+## usage:  python3  ~/GIT_DeYonker/DeYonker-lab-scripts/gopt_pdb_transfer_mod.py -p PATH_ON_LEVIATHAN -d DIRECTORY_PATH
+# Run 
+# $ python3 ~/GIT_DeYonker/DeYonker-lab-scripts/gopt_pdb_transfer_mod.py -h/--help
+# to see input options.
+###############################################################################################################################
 
 #!/bin/python
 import sys, os

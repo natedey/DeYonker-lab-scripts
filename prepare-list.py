@@ -1,15 +1,16 @@
 # Title:     prepare-list.py
 # Author:    Reza Hemmati
 # Created:   11/13/2021
-# Modefied:  12/04/2021
+# Modefied:  12/16/2021
 #
 #
-# Usage: python3 prepare-list.py arg
+# Usage: python3 prepare-list.py argument
+# Usage: python3 prepare-list.py PATH_OF_AN_OUTPUT
 
 '''
 This script generates a list of successfully finished jobs.
 When run as a script and given an argument, this script will generates a list.
-Run     $ python3 prepare-list.py --help  to see input options.
+Run     $ python3 prepare-list.py -h/--help  to see input options.
 '''
 
 import os, sys, subprocess
@@ -23,7 +24,7 @@ list_finished_files_new = []
 
 def readlastline(f):
     f.seek(-200, 2)              # Jump to the second last byte.
-    while f.read(1) != b"\n":    # Until EOL is found ...
+    while f.read(1) != b"\n":    # Until EOL is found.
         f.seek(-3, 1)            # Jump back, over the read byte plus one more.
     return f.readlines()         # Return all data from this point on.
 

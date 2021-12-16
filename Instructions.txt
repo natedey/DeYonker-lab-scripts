@@ -1,0 +1,24 @@
+# Author:    Reza Hemmati
+# Created:   12/16/2021
+
+This is written for new users on how they should
+organize their repositories on the HPC, how to pull from the two lab repositories,
+and how to correctly set up their shell environments based on the location of our scripts
+
+First, a new user must have access to the repo, because it is private.
+The following are true for DeYonker-lab-scripts and a similar procedure applies to the RINRUS repo.
+Navigate to your workshop folder and tell git that you want to create a git repository here and keep
+a record of your project by typing,
+
+      $ git init
+
+now, git knows that we have started a project.
+then type in,
+
+      $ git pull https://github.com/natedey/DeYonker-lab-scripts
+
+now, you have all files of the repo and can use python scripts present in this repo.
+Python scripts, themselves have their own help on how to use them.
+At the end, for using any scrip in the DeYonker-lab-scripts folder, it must be typed,
+
+python3   working_dir/python_script argument (if any is required)

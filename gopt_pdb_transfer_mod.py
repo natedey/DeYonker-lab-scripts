@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Title:    gopt_pdb_transfer_mod.py
 # Author:   Reza Hemmati
 # Created:  12/03/2021

@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Title:     prepare-list.py
 # Author:    Reza Hemmati
 # Created:   11/13/2021

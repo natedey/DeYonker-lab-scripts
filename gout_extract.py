@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from numpy.core.defchararray import count
 from rms import *
 from numpy import *

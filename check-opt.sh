@@ -68,8 +68,10 @@ elif [ -n "$scfwarning" ]; then
  echo "Warning, the SCF did not converge!!!"
 fi
 
+isxtboutput=`grep "xtb command was" "$file" | head -1`
 isoniomoutputfile=`grep "ONIOM: extrapolated" "$file" | head -1`
 istddft=`grep "Total Energy" "$file" | head -1`
+
 if [ -n "$isoniomoutputfile" ]; then
  printf "%s " "$file" is a ONIOM Gaussian output file
 
@@ -87,6 +89,14 @@ elif [ -n "$istddft" ]; then
       energies=( `grep "Total Energy"         $file | awk '{print $5}' ` )
        lowenergy=`grep "Total Energy"         $file | awk '{print $5}' |sort -n -r |tail -1`
   scf_energies=( `grep "SCF Done"             $file |grep -v "$print_maxcyc" | awk '{print $5}' ` )
+
+elif [ -n "$isxtboutput" ]; then
+ echo "$file" is a xtb to Gaussian output file
+      energies=( `grep "NIter=  "         $file | awk '{print $2}' ` )
+       lowenergy=`grep "NIter=  "         $file | awk '{print $2}' |sort -n -r |tail -1`
+  scf_energies=( `grep "NIter=  "             $file |grep -v "$print_maxcyc" | awk '{print $2}' ` )
+
+#normal output
 else
   energies=( `grep "SCF Done"             $file |grep -v "$print_maxcyc" | awk '{print $5}' ` )
    lowenergy=`grep "SCF Done"             $file | awk '{print $5}' |sort -n -r |tail -1`
@@ -153,26 +163,47 @@ based upon smallest rms force:"
 based upon lowest energy:"
 egrep "Total Energy|SCF Done|YES| NO " $file | grep -A5 ""\\$lowenergy"" |grep -v "\-\-" #|tail -4
 
-else
+elif [ -n "$isxtboutput" ]; then
  echo lowest energy for $file was $lowenergy
- echo " energy for $file max force" `egrep "SCF Done|YES| NO " $file | egrep -B5 "Maximum Force            $lconvcrita" | grep "SCF Done"| head -1| awk '{print $5}'`
- echo " energy for $file rms force" `egrep "SCF Done|YES| NO " $file | egrep -B6 "RMS     Force            $lconvcritb" | grep "SCF Done"| head -1| awk '{print $5}'`
+ echo " energy for $file max force" `egrep "NIter=|YES| NO " $file | egrep -B6 "Maximum Force            $lconvcrita" | grep "NIter"| head -1| awk '{print $2}'`
+ echo " energy for $file rms force" `egrep "NIter=|YES| NO " $file | egrep -B7 "RMS     Force            $lconvcritb" | grep "NIter"| head -1| awk '{print $2}'`
 
  echo smallest max force for $file was $lconvcrita
  echo smallest rms force for $file was $lconvcritb
 
  echo "
 based upon smallest max force:"
- egrep "SCF Done|YES| NO " $file | egrep -B1 "Maximum Force            $lconvcrita" | grep -v Max
- egrep "SCF Done|YES| NO " $file | egrep -A1 "Maximum Force            $lconvcrita"
+ egrep "Step number|NIter=|YES| NO | Step number" $file | egrep -B2 "Maximum Force            $lconvcrita" | grep -v Max
+ egrep "Step number|Niter=|YES| NO | Step number" $file | egrep -A2 "Maximum Force            $lconvcrita"
 
  echo "
 based upon smallest rms force:"
- egrep "SCF Done|YES| NO " $file | egrep -B2 "RMS     Force            $lconvcritb"
+ egrep "Step number|NIter=|YES| NO | Step number" $file | egrep -B3 "RMS     Force            $lconvcritb"
 
  echo "
 based upon lowest energy:"
-egrep "SCF Done|YES| NO " $file | grep -A4 ""\\$lowenergy"" |grep -v "\-\-" #|tail -4
+egrep "Step number|NIter=|YES| NO | Step number" $file | grep -A5 ""\\$lowenergy"" |grep -v "\-\-" #|tail -5
+
+else
+ echo lowest energy for $file was $lowenergy
+ echo " energy for $file max force" `egrep "SCF Done|YES| NO " $file | egrep -B6 "Maximum Force            $lconvcrita" | grep "SCF Done"| head -1| awk '{print $5}'`
+ echo " energy for $file rms force" `egrep "SCF Done|YES| NO " $file | egrep -B7 "RMS     Force            $lconvcritb" | grep "SCF Done"| head -1| awk '{print $5}'`
+
+ echo smallest max force for $file was $lconvcrita
+ echo smallest rms force for $file was $lconvcritb
+
+ echo "
+based upon smallest max force:"
+ egrep "Step number|SCF Done|YES| NO | Step number" $file | egrep -B2 "Maximum Force            $lconvcrita" | grep -v Max
+ egrep "Step number|SCF Done|YES| NO | Step number" $file | egrep -A2 "Maximum Force            $lconvcrita"
+
+ echo "
+based upon smallest rms force:"
+ egrep "Step number|SCF Done|YES| NO | Step number" $file | egrep -B3 "RMS     Force            $lconvcritb"
+
+ echo "
+based upon lowest energy:"
+egrep "Step number|SCF Done|YES| NO | Step number" $file | grep -A4 ""\\$lowenergy"" |grep -v "\-\-" #|tail -5
 
 fi
 

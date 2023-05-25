@@ -58,12 +58,12 @@ do
 #    echo corrected directory name is $j
 
 if [ -n "$1" ]; then
-echo "FILES/LOAD  \"/home/$USER/$1/$j\"" >> open.log
+echo "FILES/LOAD  \"/home/$USER/$1/$j-out.pdb\"" >> open.log
  if [ "$calcbond" = 1 ]; then
   echo "EDIT/CALCULATE_BONDING" >> open.log
  fi
 else
-echo "FILES/LOAD  \"./$j\"" >> open.log
+echo "FILES/LOAD  \"./$j-out.pdb\"" >> open.log
  if [ "$calcbond" = 1 ]; then
   echo "EDIT/CALCULATE_BONDING" >> open.log
  fi
@@ -71,6 +71,9 @@ fi
 
 done
 
+echo "MODEL/SET_VISIBLE" >> open.log
+echo "VIEW/RESET_VIEW" >> open.log
+echo "MODEL/SET_INVISIBLE" >> open.log
 
 fi
 fi

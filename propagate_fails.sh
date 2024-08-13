@@ -25,7 +25,7 @@ fi
 count=(`ls -lt | grep -e -inp -e 1.inp | wc -l`)
 #echo $count "is number of items"
 
-check=(`ls -lrt | grep -v slurm | awk '{print $9}' | cut -d. -f1 | grep -E "$count-.*-chk" | wc -l`)
+check=(`ls -lrt | grep -v slurm | grep -v pdb | awk '{print $9}' | cut -d. -f1 | grep -E "$count-.*-chk" | wc -l`)
 check1=(`ls -lrt | grep -v slurm | awk '{print $9}' | cut -d. -f1 |grep -E "$count-.*-chk"`)
 #echo $check1
 #echo $check

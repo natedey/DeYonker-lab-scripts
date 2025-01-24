@@ -22,7 +22,7 @@ repository, this script should NEVER overwrite anything!"
 exit
 fi
 
-count=(`ls -lt | grep -e -inp -e 1.inp | wc -l`)
+count=(`ls -lt | grep -e -inp -e '1\.inp' | wc -l`)
 #echo $count "is number of items"
 
 check=(`ls -lrt | grep -v slurm | grep -v pdb | awk '{print $9}' | cut -d. -f1 | grep -E "$count-.*-chk" | wc -l`)

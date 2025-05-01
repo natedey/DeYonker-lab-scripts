@@ -203,7 +203,12 @@ based upon smallest rms force:"
 
  echo "
 based upon lowest energy:"
-egrep "Step number|SCF Done|YES| NO | Step number" $file | grep -A4 ""\\$lowenergy"" |grep -v "\-\-" #|tail -5
-
+ egrep "Step number|SCF Done|YES| NO | Step number" $file | grep -A4 ""\\$lowenergy"" |grep -v "\-\-"
+ ### DAW 2025-05-01: make sure lowest energy struc step number printed even if it is last before crashing
+ lastline=$(egrep "Step number|SCF Done|YES| NO | Step number" $file | grep -A4 ""\\$lowenergy"" |grep -v "\-\-" | tail -1)
+ if [[ $lastline == *"SCF Done"* ]]; then
+  prevstep=$(egrep "Step number|SCF Done|YES| NO | Step number" $file | grep -B5 ""\\$lowenergy"" | awk '/Step number/ {print $3}' | tail -1)
+  echo " Lowest energy at last structure (after step $prevstep)"
+ fi
 fi
 

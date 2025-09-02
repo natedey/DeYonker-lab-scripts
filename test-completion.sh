@@ -74,13 +74,20 @@ do
          echo "Molpro completed:    " $i/1.out
        elif [ -n "`tail -n 30 $i/1.out | grep 'Buy a developer a beer'`" ] ; then
          echo "PSI4 completed:    " $i/1.out
+       elif [ -n "`tail -n 15 $i/1.out | grep 'Thank you very much for using Q-Chem.'`" ] ; then
+         echo  "QChem completed:    " $i/1.out
        else
          echo "incomplete:          " $i/1.out
        fi
       fi
+      
      elif [ -f $i/OPT.out ];then
        if [ -n "`tail -n 5 $i/OPT.out | grep "ORCA TERMINATED NORMALLY"`" ]; then
          echo "ORCA completed:      " $i/OPT.out
+       elif [ -n "`tail -n 3 $i/OPT.out | grep "Error"`" ]; then
+         echo "ORCA failed:      " $i/OPT.out
+       else
+       	 echo "incomplete:          " $i/OPT.out
        fi
      else
       echo "1.out does not exist:" $i

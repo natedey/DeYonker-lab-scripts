@@ -1,0 +1,142 @@
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+	. ~/.bashrc
+fi
+
+# User specific environment and startup programs
+
+export PATH=/home/dwappett/miniconda3/bin/
+export PATH=$PATH:/home/dwappett/git/RINRUS/bin/
+export PATH=$PATH:/home/dwappett/git/RINRUS/bin/FSAPT/
+export PATH=$PATH:/home/dwappett/git/RINRUS/bin/DAW_prototypes
+export PATH=$PATH:/home/dwappett/DAW_scripts
+export PATH=$PATH:/home/dwappett/git/DeYonker-lab-scripts
+export PATH=$PATH:/home/dwappett/git/DeYonker-lab-scripts/dwappett
+export PATH=$PATH:/home/dwappett/newbin
+export PATH=$PATH:/home/tsuhagia/pymol
+export PATH=$PATH:/bin
+export PATH=$PATH:/usr/bin
+export PATH=$PATH:/usr/local/bin
+export PATH=$PATH:/usr/local/sbin
+export PATH=$PATH:/usr/sbin
+export PATH=$PATH:/home/dwappett/.local/bin
+export PATH=$PATH:/home/ndyonker/git/psi4/objdir/stage/bin
+export PATH=$PATH:/home/ndyonker/.conda/envs/p4dev/bin
+export PATH=$PATH:/home/ndyonker/src/bin
+export PATH=$PATH:/home/ndyonker/src/mgltools_x86_64Linux2_1.5.7/bin
+export PATH=$PATH:/home/ndyonker/src/orca_6_0_0
+export PATH=$PATH:/home/dwappett/git/Pymol-script-repo
+
+export PYTHONPATH=/home/dwappett/git/RINRUS/lib3
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/git/RINRUS/bin/
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/git/RINRUS/bin/DAW_prototypes/
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/git/RINRUS/bin/FSAPT/
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/DAW_scripts/
+#export PYTHONPATH=$PYTHONPATH:/home/tsuhagia/pymol/lib/python3.7/site-packages/
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/git/Pymol-script-repo/
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/git/EnzyHTP
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/miniconda3/envs/enzy_htp/lib/
+
+export LD_LIBRARY_PATH=$HOME/git/RINRUS/lib3:$LD_LIBRARY_PATH
+
+unset USERNAME
+export LARGE_FILES=y
+
+PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD}\007"'
+TERM=xterm
+
+export LS_COLORS='no=00:fi=00:di=01;31:ln=01;36:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:ex=01;32:*out=01;34:*inp=01;36:*chk=01;35'
+
+set PS1="$(whoami)@$(hostname):$(pwd)"
+
+#alias d='pwd'
+#alias p='cd ..'
+#alias dir='ls -l'
+#alias cls='clear'
+
+export SVN_EDITOR=vi
+
+function mol() { command /home/$USER/newbin/molden -l -S "$@".out >& /dev/null & }
+#function qf() { command qstat -f "$@" | command grep exec_host; }
+function rwf() { command ssh "$@" 'rm -rf /tmp/r*'; }
+function catrwf() { command cat "$@".g98.out | command grep node; }
+#function qc() { command qstat -a |grep -v '0 Q ' |grep -c "$@" ;}
+#function qc2() { command qstat -a |egrep -v '0 E |0 Q ' |grep -c "$@" ;}
+function xyz() { command awk -f ~/newbin/extract-xyz-g03.awk "$@".out ;}
+function xyz-freq() { command awk -f ~/newbin/prog-freq-coords.awk "$@" ;}
+function xyz-no-freq() { command awk -f ~/bin/extract-xyz-g03-no-freq.awk "$@".out ;}
+function zpe() { command pwd; command grep 'Done' "$@".out |command tail -n 1; command grep 'Sum of e' "$@".out ; command grep 'arning' "$@".out  | grep -v 'arning -- This'; command grep "imag" "$@".out ; command grep -m 1 "NBasis" "$@".out ; }
+function eigen() { command egrep 'Done|YES| NO |     Eigenvalues ---   -' "$@".out |more;}
+function eigen09() { command awk -f ~/bin/eigen.awk 1.out |more;}
+function peigen() { command egrep 'extrapolated|YES| NO |     Eigenvalues ---    -' "$@".out |more;}
+function scpl() { command scp *.fchk 141.225.147.5:~/"$@"; }
+function xyz-mopac() { command awk -f ~/bin/extract-xyz-mopac-msi.awk "$@".out ;}
+function mol09() { command awk -f ~/bin/extract-molden-g09-opt.awk "$@".out > geom.mol; command /home/webster/bin/molden -l geom.mol >& /dev/null & }
+function cleanfreq() { command awk -f ~/bin/prog-clean-freq.awk "$@".out > freq-clean.out;}
+function cleanfreq09() { command awk -f ~/bin/prog-clean-freq-g09.awk "$@".out > freq-clean.out;}
+function create-simspec() { command echo "G 20. nm" > input ; command echo "100. 900. 1." >> input ; command grep "\<nm\>" 1.out | awk '{print $9}' | grep -c f >> input ; command grep "Excited State " 1.out | awk '{print $7,$9}' | command sed 's/f=//g' >> input; ~/bin/simspec input; }
+function makeonecar() { command make-car.sh ; command cerius-xyz carcoords; command scp carcoords.car 141.225.147.5:"$@"; }
+function checknodes() { command mdiag -n -v | awk '{ printf "%-4s  %-10s   %-5s   %-5s   %-20s\n", $1, $2, $3, $11, $13}' | head -n -4 ; }
+function xdone() { command egrep 'Step number|NIter=   |NO |YES|Predicted' "$@" ; }
+
+alias hinv='/usr/local/bin/lhinv'
+alias xt="xterm -n $hostname -T $hostname -sb -sl 4000 -bg darkgrey -fg black&"
+alias o1done="egrep 'Done'"
+alias pm3done="egrep 'Energy|NO |YES'"
+alias ondone="egrep 'extrapolated|NO |YES'"
+alias edone="egrep 'SCF Done|NO |YES|Predicted' *.out"
+alias echeck="egrep 'Step number|Done|YES' 1.out | sed 's%SCF Done%\nSCF Done%g' |more"
+alias echeckfail="egrep 'Step number|Done|YES' 1-fail-out | sed 's%SCF Done%\nSCF Done%g' |more"
+alias mp2done="egrep 'EUMP2|NO |YES|Predicted' *.out"
+alias mp3done="egrep 'EUMP3|NO |YES|Predicted' *.out"
+alias excdone="egrep 'Total Energy|NO |YES|Predicted' *.out"
+alias nwdone="egrep -A3 'Gmax' *.out"
+alias fdone="egrep 'SCF Done|NO |YES'"
+#alias qu="qstat -u dwappett"
+alias qsu="~/bin/qsu.sh"
+alias tree="ls -R | grep ":$" | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's/-/|/'" 
+alias listdir='find ./ -type d |egrep -v $1 | sort'
+alias qecheck="egrep 'Total energy|RMS|Gradient  |Displacement'"
+alias qedone="egrep 'Total energy|RMS|Gradient  |Displacement|Step '"
+
+### this version of qs replaced by my preferred one in bashrc
+#function qs() { if [ -z "$1" ]; then command squeue -u "$USER" -h -t pending,running,suspended -r -O "state" | uniq -c; sacct --state=running,pending,suspended -u "$USER" -X -o state,partition,elapsed,timelimit%15,jobid%25,workdir%-120; else squeue -u "$1" -h -t pending,running,suspended -r -O "state" | uniq -c; command sacct --state=running,pending,suspended -u "$1" -X -o  state,partition,elapsed,timelimit%15,jobid%25,workdir%-120; fi }
+
+export AMBERHOME=/public/apps/amber/amber18
+
+alias xleap='$AMBERHOME/bin/xleap'
+alias tleap='$AMBERHOME/bin/tleap'
+alias ptraj='$AMBERHOME/bin/ptraj'
+alias ambpdb='$AMBERHOME/bin/ambpdb'
+alias antechamber='$AMBERHOME/bin/antechamber'
+alias parmchk='$AMBERHOME/bin/parmchk'
+alias reduce='$AMBERHOME/bin/reduce'
+alias molsurf='$AMBERHOME/bin/molsurf'
+
+export UWHPSC=/home/ndyonker/src/coursera/uwhpsc
+export MYHPSC=/home/ndyonker/src/coursera/myhpsc
+
+alias autoconf='/public/apps/autoconf/2.69/bin/autoconf'
+alias gnuplot='/public/apps/gnuplot/5.0.1/bin/gnuplot'
+export NBOEXE=/home/ndyonker/src/nbo6/bin/nbo6.i8.exe
+
+alias sgs3='aws s3 --endpoint-url=https://s3.memphis.edu:8082'
+
+#pDynamo environment variables
+export PDYNAMO3_HOME=/home/ndyonker/git/pDynamo3
+export PDYNAMO3_ORCACOMMAND=/home/jfbchega/programs/orca_5_0_1_linux_x86-64_shared_openmpi411/orca
+export PDYNAMO3_PARAMETERS=$PDYNAMO3_HOME/parameters
+export PDYNAMO3_PYTHONCOMMAND=python3
+export PDYNAMO3_SCRATCH=/home/scratch/ndyonker/pDynamo
+export PDYNAMO3_STYLE=$PDYNAMO3_PARAMETERS/ccsStyleSheets/defaultStyle.css
+#export PYTHONPATH=/home/ndyonker/git/psi4/objdir/stage/lib:/home/ndyonker/src/xlrd:$PDYNAMO3_HOME:$PYTHONPATH
+export REDUCE_HET_DICT=/home/$USER/git/RINRUS/bin/reduce_wwPDB_het_dict.txt
+export PATH=$PATH:/home/jfbchega/programs/orca_5_0_1_linux_x86-64_shared_openmpi411
+export LD_LIBRARY_PATH=/home/jfbchega/programs/orca_5_0_1_linux_x86-64_shared_openmpi411:$LD_LIBRARY_PATH
+
+alias adt='/home/ndyonker/src/mgltools_x86_64Linux2_1.5.7/bin/adt'
+
+#for pymol
+module load openswr/21.3.9

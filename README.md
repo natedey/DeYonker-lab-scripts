@@ -18,36 +18,59 @@ If you create scripts you use regularly or that might be useful for other people
 
 ### Contents of this directory:
 
-**It would be super helpful to have a short description of what each of these does! I (DAW) have started this off for some of the scripts I've used. Please contribute where you can! **
+DAW 09-25: I added this list of the directory contents and started sectioning it up/adding short descriptions of what the scripts do. Please contribute where you can too!
 
+
+**Setting up your hpc environment:**
 - alias_bash_profile.txt
 	- this is a list of useful aliases for your bash_profile
 
-- avg_pdbs.py
-- big-mol.sh
-- car_to_pdb.py
-- cerius_loader.py
-- cerius-xyz-gen-from-moe.sh
-- check-opt.sh
 
+**Preparing jobs**
+- gen_irc.py
+	```
+	usage: gen_irc.py
+	prepares gaussian input files for irc1/irc2 from finished tsopt calc
+	```
+- xtb_gen_irc.py
+	```
+	usage: xtb_gen_irc.py
+	same as gen_irc.py but for xtb calcs in gaussian
+	```
+- xtb-g16-pdbfix.py
+	```
+	usage: xtb-g16-pdbfix.py [pdb]
+	creates 1.fix constraints file
+	```
+	
+
+**Managing jobs:**
+- test-completion.sh
+	```
+	usage: test-completion.sh [dir or "list" plus list file name]
+	tests completion of gaussian 1.out files in current dir and its subdirs (or dirs specified in list file). files are labeled as complete/incomplete/failed
+	```
+- check-opt.sh
 	```
 	usage: check-opt.sh [file]
 	extracts steps with smallest forces and lowest energy from gaussian output
 	if no file specified, will extract from 1.out
 	```
+- propagate_fails.sh
+	```
+	usage: propagate_fails.sh [label]
+	saves gaussian 1.inp, 1.out and 1.chk as [n]-[label]-inp, [n]-[label]-out and [n]-[label]-chk and so previous runs don't get overwritten
+	increases count each time so files are kept in chronological order
+	```
+- propagate_orca.sh
+	```
+        usage: propagate_orca.sh [orca file name] [label]
+        same as propagate_fails.sh but for orca jobs. saves the inp and out files and gbw/hess if present
+	```
 
-- combifromcontacts.py
-- CombiFromContacts.py
-- convert-coords.sh
-- create-simspec-ir.sh
-- create-simspec-nmr.sh
-- create-simspec-uv.sh
-- cubegen.sh
-- distcalc.py
-- extract-geom-input.sh
-- extract-geom-output.sh
+
+**Collecting outputs:**
 - extract.sh
-
 	```
 	usage: extract.sh [warning/col/list] [list]
 	extracts energies from 1.out files in dir and its subdirs
@@ -57,16 +80,26 @@ If you create scripts you use regularly or that might be useful for other people
 	```
 
 
-- gen_irc.py
+**Not yet sorted/described:**
+- avg_pdbs.py
+- big-mol.sh
+- car_to_pdb.py
+- cerius_loader.py
+- cerius-xyz-gen-from-moe.sh
+- combifromcontacts.py
+- CombiFromContacts.py
+- convert-coords.sh
+- create-simspec-ir.sh
+- create-simspec-nmr.sh
+- create-simspec-uv.sh
+- cubegen.sh
+- extract-geom-input.sh
+- extract-geom-output.sh
 - genmodelfiles.py
 - GenResAtoms.py
 - gopt_etrack.py
 - gopt_pdb_transfer_mod.py
 - gopt_pdb_transfer.py
-- gopt_to_pdb.py
-
-	- old version of the one in the rinrus github, don't use
-
 - gout_extract.py
 - identifiles.py
 - interaction-info.py
@@ -83,21 +116,6 @@ If you create scripts you use regularly or that might be useful for other people
 - populate-submission-script-g16-b01.sh
 - prepare-list.py
 - print-error-in-output.sh
-- propagate_fails.sh
-
-	```
-	usage: propagate_fails.sh [label]
-	saves gaussian 1.inp, 1.out and 1.chk as [n]-[label]-inp, [n]-[label]-out and [n]-[label]-chk and so previous runs don't get overwritten
-	increases count each time so files are kept in chronological order
-	```
-
-- propagate_orca.sh
-
-	```
-        usage: propagate_orca.sh [orca file name] [label]
-        same as propagate_fail.sh but for orca jobs. saves the inp and out files and gbw/hess if present
-        ```
-
 - read_gout_xtb.py
 - route-input.sh
 - route.sh
@@ -108,16 +126,13 @@ If you create scripts you use regularly or that might be useful for other people
 - slurm-array-molpro.sh
 - submit-all.sh
 - submit-new.sh
-- test-completion.sh
-
-	```
-	usage: test-completion.sh [dir or "list" plus list file name]
-	tests completion of gaussian 1.out files in current dir and its subdirs (or dirs specified in list file). files are labeled as complete/incomplete/failed
-	```
-
 - vec_calc.py
 - write-matchmodel.sh
 - write-openlog-pdb.sh
 - write-openlog.sh
-- xtb-g16-pdbfix.py
-- xtb_gen_irc.py
+
+
+
+**Use the newer RINRUS versions of these functions instead of these scripts**
+- distcalc.py (closest atom-atom distances done with RINRUS dist_rank.py)
+- gopt_to_pdb.py

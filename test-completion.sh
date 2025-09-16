@@ -89,7 +89,18 @@ do
        else
        	 echo "incomplete:          " $i/OPT.out
        fi
+
+     elif [ -f $i/orca.out ];then
+       if [ -n "`tail -n 5 $i/orca.out | grep "ORCA TERMINATED NORMALLY"`" ]; then
+         echo "ORCA completed:      " $i/orca.out
+       elif [ -n "`tail -n 3 $i/orca.out | grep "Error"`" ]; then
+         echo "ORCA failed:      " $i/orca.out
+       else
+       	 echo "incomplete:          " $i/OPT.out
+       fi
+
      else
       echo "1.out does not exist:" $i
      fi
+
 done

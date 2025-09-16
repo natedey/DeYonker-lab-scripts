@@ -22,16 +22,16 @@ def get_scf(lines):
 def gaussian_num(gfile):
     with open(gfile) as f:
         fline = f.read().replace('\n ','')
-    m = re.search('NImag=(\w+)',fline)
+    m = re.search(r'NImag=(\w+)',fline)
     try:
         nimag = int(m.group(0).split('=')[-1])
     except:
         nimag = None
-    m = re.search('NAtoms=(\s+)(\d+)',fline)
+    m = re.search(r'NAtoms=(\s+)(\d+)',fline)
     natoms = int(m.group(0).split('=')[-1])
 #    m = re.search('NBasis=(\s+)(\d+)',fline)
 #    nbasis = int(m.group(0).split('=')[-1])
-    m = re.search('Charge =(\s+)[+-]?(\d+) Multiplicity =(\s+)(\d+)',fline)
+    m = re.search(r'Charge =(\s+)[+-]?(\d+) Multiplicity =(\s+)(\d+)',fline)
     v = m.group(0).split()
     charge = int(v[2])
     multip = int(v[5])

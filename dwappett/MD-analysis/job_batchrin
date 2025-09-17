@@ -1,0 +1,105 @@
+#!/bin/bash
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=2G
+#SBATCH --time=48:00:00
+#SBATCH --partition=acomputeq
+#SBATCH --array=1-18
+
+source ~/.bashrc
+conda activate rinrus
+
+nrun=$(head -${SLURM_ARRAY_TASK_ID} runs.txt | tail -1)
+rt=0
+
+#for i in a b c d e f g h i j k l m n o p q r s t; do
+### 2025-07-29: up to h dirs took around 18.5 hours - killed and restarted w increased walltime at this point
+for i in i j k l m n o p q r s t; do
+  SECONDS=0
+  cd ${nrun}${i}
+
+  # do probe with each ligand
+  python ~/git/RINRUS/bin/MD_batch_rin.py -s A:128 -type probe
+  mkdir seed-A128-probe
+  mv run*.FG_probe_counts.dat run*.res_atoms.dat seed-A128-probe/
+  for f in batch_atominfo.pkl batch_rawdf.pkl batch_res_atoms.dat batch_stats.dat; do
+    mv $f A128-probe.$f
+  done
+  
+  python ~/git/RINRUS/bin/MD_batch_rin.py -s B:256 -type probe
+  mkdir seed-B256-probe
+  mv run*.FG_probe_counts.dat run*.res_atoms.dat seed-B256-probe/
+  for f in batch_atominfo.pkl batch_rawdf.pkl batch_res_atoms.dat batch_stats.dat; do
+    mv $f B256-probe.$f
+  done
+  
+  python ~/git/RINRUS/bin/MD_batch_rin.py -s C:384 -type probe
+  mkdir seed-C384-probe
+  mv run*.FG_probe_counts.dat run*.res_atoms.dat seed-C384-probe/
+  for f in batch_atominfo.pkl batch_rawdf.pkl batch_res_atoms.dat batch_stats.dat; do
+    mv $f C384-probe.$f
+  done
+  
+  # clean probe files
+  tar -czvf probe-files.tgz seed-A128-probe seed-B256-probe seed-C384-probe *.probe
+  rm -r seed-A128-probe seed-B256-probe seed-C384-probe *.probe
+    
+  # do arpeggio with each ligand
+  python ~/git/RINRUS/bin/MD_batch_rin.py -s A:128 -type arpeggio
+  mkdir seed-A128-arpeggio
+  mv run*.FG_arpeggio_counts.dat run*.res_atoms.dat run*.res_atoms_types.dat seed-A128-arpeggio/
+  for f in batch_atominfo.pkl batch_rawdf.pkl batch_res_atoms.dat batch_stats.dat; do
+    mv $f A128-arpeggio.$f
+  done
+  
+  python ~/git/RINRUS/bin/MD_batch_rin.py -s B:256 -type arpeggio
+  mkdir seed-B256-arpeggio
+  mv run*.FG_arpeggio_counts.dat run*.res_atoms.dat run*.res_atoms_types.dat seed-B256-arpeggio/
+  for f in batch_atominfo.pkl batch_rawdf.pkl batch_res_atoms.dat batch_stats.dat; do
+    mv $f B256-arpeggio.$f
+  done
+  
+  python ~/git/RINRUS/bin/MD_batch_rin.py -s C:384 -type arpeggio
+  mkdir seed-C384-arpeggio
+  mv run*.FG_arpeggio_counts.dat run*.res_atoms.dat run*.res_atoms_types.dat seed-C384-arpeggio/
+  for f in batch_atominfo.pkl batch_rawdf.pkl batch_res_atoms.dat batch_stats.dat; do
+    mv $f C384-arpeggio.$f
+  done
+  
+  # clean arpeggio files
+  tar -czvf arpeggio-files.tgz seed-A128-arpeggio seed-B256-arpeggio seed-C384-arpeggio *.amam *.amri *.ari *.atomtypes *.bs_contacts *.contacts *.polarmatch *.residue_sifts *.ri *.rings *.sift *.siftmatch *.specific*
+  rm -r seed-A128-arpeggio seed-B256-arpeggio seed-C384-arpeggio *.amam *.amri *.ari *.atomtypes *.bs_contacts *.contacts *.polarmatch *.residue_sifts *.ri *.rings *.sift *.siftmatch *.specific* 
+  
+  # tar and delete pdbs
+  tar -czvf pdbs.tgz *.pdb
+  rm *.pdb
+  
+  cd ..
+
+  if (( $SECONDS > 3600 )) ; then
+      let "hours=SECONDS/3600"
+      let "minutes=(SECONDS%3600)/60"
+      let "seconds=(SECONDS%3600)%60"
+      echo "${nrun}${i}: Completed in $hours hour(s), $minutes minute(s) and $seconds second(s)" 
+  elif (( $SECONDS > 60 )) ; then
+      let "minutes=(SECONDS%3600)/60"
+      let "seconds=(SECONDS%3600)%60"
+      echo "${nrun}${i}: Completed in $minutes minute(s) and $seconds second(s)"
+  else
+      echo "${nrun}${i}: Completed in $SECONDS seconds"
+  fi
+  rt=$((rt + SECONDS))  
+
+done
+
+if (( $rt > 3600 )) ; then
+    let "hours=rt/3600"
+    let "minutes=(rt%3600)/60"
+    let "seconds=(rt%3600)%60"
+    echo "Total run: $hours hour(s), $minutes minute(s) and $seconds second(s)"
+elif (( $rt > 60 )) ; then
+    let "minutes=(rt%3600)/60"
+    let "seconds=(rt%3600)%60"
+    echo "Total run: $minutes minute(s) and $seconds second(s)"
+else
+    echo "Total run: $rt seconds"
+fi

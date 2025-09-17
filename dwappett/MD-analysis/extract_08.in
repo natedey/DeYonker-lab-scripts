@@ -1,0 +1,12 @@
+parm ../2CHT_solv.prmtop
+reference ../08.equil.mdcrd 1
+trajin ../08.equil.mdcrd 
+strip :Na+
+closest 600 :COR
+autoimage
+align :COR reference
+autoimage :COR
+align :COR reference
+trajout 08/run08.pdb pdb multi nobox noter keepext
+run
+quit

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-DAW personal F/I-SAPT input generation script
+DAW prototype (F)I-SAPT input generation script
+created early 2025
 """
 
 import sys, os, argparse
@@ -74,7 +75,7 @@ def fisapt_input(inp_name,inp_temp,charge,multiplicity,pdb,tot_charge,seed):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='FISAPT setup')
     parser.add_argument('-pdb', dest='pdbf', default=None, help='model pdb')
-    parser.add_argument('-part', dest='seedpart', default=None, help='file with seed part by atom, contents like "A 26 N X; A 26 CA B..." [ch,id,atom,frag]')
+    parser.add_argument('-part', dest='seedpart', default=None, help='file specifying atoms in frags A and X (everything else automatically assigned to B). each line should list: chain id atom frag')
     parser.add_argument('-c', dest='charge', default=0, help='seed charge')
     parser.add_argument('-m', dest='multi', default=1, help='multiplicity')
 

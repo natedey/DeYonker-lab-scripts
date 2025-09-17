@@ -1,0 +1,42 @@
+#!/bin/bash
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=1G
+#SBATCH --time=04:00:00
+#SBATCH --partition=acomputeq
+#SBATCH --array=1-18
+
+source ~/.bashrc
+conda activate AmberTools23
+
+SECONDS=0
+
+nrun=$(head -${SLURM_ARRAY_TASK_ID} runs.txt | tail -1)
+mkdir $nrun
+
+# extract
+cpptraj -i extract_${nrun}.in
+
+# rename and reorg
+python /project/dwappett/old_MD_stuff/MD-chorismate/long_md/DAW_extract/rename.py ${nrun}
+
+# add chains
+for i in a b c d e f g h i j k l m n o p q r s t; do
+  cd ${nrun}$i
+  ls *.pdb > pdblist.txt
+  cp /project/dwappett/old_MD_stuff/MD-chorismate/long_md/DAW_extract/job_addchain .
+  sbatch job_addchain
+  cd ..
+done
+
+if (( $SECONDS > 3600 )) ; then
+    let "hours=SECONDS/3600"
+    let "minutes=(SECONDS%3600)/60"
+    let "seconds=(SECONDS%3600)%60"
+    echo "Completed in $hours hour(s), $minutes minute(s) and $seconds second(s)"
+elif (( $SECONDS > 60 )) ; then
+    let "minutes=(SECONDS%3600)/60"
+    let "seconds=(SECONDS%3600)%60"
+    echo "Completed in $minutes minute(s) and $seconds second(s)"
+else
+    echo "Completed in $SECONDS seconds"
+fi

@@ -1,0 +1,30 @@
+#!/bin/bash 
+#SBATCH --cpus-per-task=NPROC
+#SBATCH --time=96:00:00
+#SBATCH --partition=acomputeq
+#SBATCH --mem-per-cpu=10GB
+
+source ~/.bash_profile
+conda activate psi4
+conda list
+
+export PSI_SCRATCH=/scratch/$USER/$SLURM_JOB_ID
+mkdir -p $PSI_SCRATCH 
+
+#export PATH=$PATH:/home/ndyonker/git/psi4/objdir/stage/share/psi4
+export OMP_NUM_THREADS=NPROC
+export MKL_NUM_THREADS=NPROC
+
+echo Working directory is $SLURM_SUBMIT_DIR
+echo tmp directory is $PSI_SCRATCH
+echo env is $ENVIRONMENT
+echo Running on host `hostname`
+echo Directory is `pwd`
+echo pbs job id is $SLURM_JOB_ID
+
+cd $PSI_SCRATCH
+
+which psi4
+time psi4 -i $SLURM_SUBMIT_DIR/input.dat -o $SLURM_SUBMIT_DIR/1.out 
+cp -r $PSI_SCRATCH/* $SLURM_SUBMIT_DIR/
+rm -rf /scratch/$USER/$SLURM_JOB_ID

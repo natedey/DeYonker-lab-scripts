@@ -42,12 +42,32 @@ DAW 09-25: I added this list of the directory contents and started sectioning it
 	usage: xtb-g16-pdbfix.py [pdb]
 	creates 1.fix constraints file
 	```
-	
+- gen_jobscript_g16.sh
+	```
+	usage: gen_jobscript_g16.sh
+	creates 1 slurm submission script for gaussian input file with matching mem/cpu settings
+	```
+- gen_jobscript_orca6.sh
+	```
+	usage: gen_jobscript_orca6.sh [optional: orca inp file name]
+	creates 1 slurm submission script for orca input file with matching mem/cpu settings
+	```
+- gen_jobscript_psi4.sh
+	```
+	usage: gen_jobscript_psi4.sh
+	creates 1 slurm submission script for psi4 input file with matching cpu settings
+	```
+- populate-submission-scripts.sh
+	```
+	usage: populate-submission-scripts.sh
+	adds 1 slurm submission script to any subdirs that don't have one using the gen_jobscript_[program] scripts
+	```
+
 
 **Managing jobs:**
 - test-completion.sh
 	```
-	usage: test-completion.sh [dir or "list" plus list file name]
+	usage: test-completion.sh [dir(s) or "list" plus list file name]
 	tests completion of gaussian 1.out files in current dir and its subdirs (or dirs specified in list file). files are labeled as complete/incomplete/failed
 	```
 - check-opt.sh
@@ -77,6 +97,14 @@ DAW 09-25: I added this list of the directory contents and started sectioning it
 	arg "warning" - prints warnings
 	arg "col" - prints in column format
 	arg "list" - extracts from dirs specified in list txt file
+	```
+
+
+**MD stuff:**
+- add_chain.py
+	```
+	usage: add_chain.py -list [file listing pdbs] -chain [startres/endres/chainletter ...]
+	adds chain info to pdbs (for example ones created from MD runs with cpptraj)
 	```
 
 
@@ -113,7 +141,6 @@ DAW 09-25: I added this list of the directory contents and started sectioning it
 - measure.sh
 - msi
 - plot.sh
-- populate-submission-script-g16-b01.sh
 - prepare-list.py
 - print-error-in-output.sh
 - read_gout_xtb.py

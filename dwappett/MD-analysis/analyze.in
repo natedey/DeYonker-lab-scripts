@@ -1,0 +1,61 @@
+parm ../2CHT_solv.prmtop
+reference ../2CHT_solv.inpcrd
+trajin ../08.equil.mdcrd
+trajin ../09.equil.mdcrd
+trajin ../10.equil.mdcrd
+trajin ../11.equil.mdcrd
+trajin ../12.equil.mdcrd
+trajin ../13.equil.mdcrd
+trajin ../14.equil.mdcrd
+trajin ../15.equil.mdcrd
+trajin ../16.equil.mdcrd
+trajin ../17.equil.mdcrd
+
+strip :WAT
+strip :Na+
+
+rms All :1-384 reference out frame_rms.dat
+rms Heavy :1-384&!@/H reference out frame_rms.dat
+rms Ch1All :1-128 reference out frame_rms.dat
+rms Ch2All :129-256 reference out frame_rms.dat
+rms Ch3All :257-384 reference out frame_rms.dat
+rms Ch1hv :1-128&!@/H reference out frame_rms.dat
+rms Ch2hv :129-256&!@/H reference out frame_rms.dat
+rms Ch3hv :257-384&!@/H reference out frame_rms.dat
+rms Ch1Prot :1-127 reference out frame_rms.dat
+rms Ch2Prot :129-255 reference out frame_rms.dat
+rms Ch3Prot :257-383 reference out frame_rms.dat
+rms Ch1MC :1-127@C,CA,N,O,H reference out frame_rms.dat
+rms Ch2MC :129-255@C,CA,N,O,H reference out frame_rms.dat
+rms Ch3MC :257-383@C,CA,N,O,H reference out frame_rms.dat
+rms Ch1SC :1-127&!@C,CA,N,O,H reference out frame_rms.dat
+rms Ch2SC :129-255&!@C,CA,N,O,H reference out frame_rms.dat
+rms Ch3SC :257-383&!@C,CA,N,O,H reference out frame_rms.dat
+rms Ch1COR :128 reference out frame_rms.dat
+rms Ch2COR :256 reference out frame_rms.dat
+rms Ch3COR :384 reference out frame_rms.dat
+rms Ch1CORhv :128&!@H= reference out frame_rms.dat
+rms Ch2CORhv :256&!@H= reference out frame_rms.dat
+rms Ch3CORhv :384&!@H= reference out frame_rms.dat
+
+atomicfluct rmsfCh1 out res_rmsf.dat :1-127 byres
+atomicfluct rmsfCh2 out res_rmsf.dat :129-255 byres
+atomicfluct rmsfCh3 out res_rmsf.dat :257-383 byres
+atomicfluct rmsfCh1MC out res_rmsf.dat :1-127@C,CA,N,O,H byres
+atomicfluct rmsfCh2MC out res_rmsf.dat :129-255@C,CA,N,O,H byres
+atomicfluct rmsfCh3MC out res_rmsf.dat :257-383@C,CA,N,O,H byres
+atomicfluct rmsfCh1SC out res_rmsf.dat :1-127&!@C,CA,N,O,H byres
+atomicfluct rmsfCh2SC out res_rmsf.dat :129-255&!@C,CA,N,O,H byres
+atomicfluct rmsfCh3SC out res_rmsf.dat :257-383&!@C,CA,N,O,H byres
+atomicfluct bfacCh1 out res_bfac.dat :1-127 byres bfactor
+atomicfluct bfacCh2 out res_bfac.dat :129-255 byres bfactor
+atomicfluct bfacCh3 out res_bfac.dat :257-383 byres bfactor 
+atomicfluct bfacCh1MC out res_bfac.dat :1-127@C,CA,N,O,H byres bfactor
+atomicfluct bfacCh2MC out res_bfac.dat :129-255@C,CA,N,O,H byres bfactor
+atomicfluct bfacCh3MC out res_bfac.dat :257-383@C,CA,N,O,H byres bfactor 
+atomicfluct bfacCh1SC out res_bfac.dat :1-127&!@C,CA,N,O,H byres bfactor
+atomicfluct bfacCh2SC out res_bfac.dat :129-255&!@C,CA,N,O,H byres bfactor
+atomicfluct bfacCh3SC out res_bfac.dat :257-383&!@C,CA,N,O,H byres bfactor
+
+run
+exit 

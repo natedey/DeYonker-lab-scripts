@@ -1,0 +1,51 @@
+#!/bin/bash
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=1G
+#SBATCH --time=04:00:00
+#SBATCH --partition=acomputeq
+#SBATCH --array=1-18
+
+source ~/.bashrc
+conda activate AmberTools23
+
+################################################################
+### script for extracting pdbs, separating into dirs of 1000 ###
+### and then submitting second job to run add_chain script   ###
+### array/"parallel" version: does many runs simultaneously  ###
+### make sure array option above matches length of runs.txt  ###
+################################################################
+
+SECONDS=0
+
+nrun=$(head -${SLURM_ARRAY_TASK_ID} runs.txt | tail -1)
+mkdir $nrun
+
+# extract
+cpptraj -i extract_${nrun}.in
+
+# rename and reorg
+python ~/git/DeYonker-lab-scripts/MD-analysis/rename.py ${nrun}
+
+# add chains
+for i in a b c d e f g h i j k l m n o p q r s t; do
+ if [ -d "${nrun}_$i" ]; then
+  cd ${nrun}_$i
+  ls *.pdb > pdblist.txt
+  cp ~/git/DeYonker-lab-scripts/MD-analysis/job_addchain .
+  sbatch job_addchain
+  cd ..
+ fi
+done
+
+if (( $SECONDS > 3600 )) ; then
+    let "hours=SECONDS/3600"
+    let "minutes=(SECONDS%3600)/60"
+    let "seconds=(SECONDS%3600)%60"
+    echo "Completed in $hours hour(s), $minutes minute(s) and $seconds second(s)"
+elif (( $SECONDS > 60 )) ; then
+    let "minutes=(SECONDS%3600)/60"
+    let "seconds=(SECONDS%3600)%60"
+    echo "Completed in $minutes minute(s) and $seconds second(s)"
+else
+    echo "Completed in $SECONDS seconds"
+fi

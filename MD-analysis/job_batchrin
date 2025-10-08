@@ -11,9 +11,7 @@ conda activate rinrus
 nrun=$(head -${SLURM_ARRAY_TASK_ID} runs.txt | tail -1)
 rt=0
 
-#for i in a b c d e f g h i j k l m n o p q r s t; do
-### 2025-07-29: up to h dirs took around 18.5 hours - killed and restarted w increased walltime at this point
-for i in i j k l m n o p q r s t; do
+for i in a b c d e f g h i j k l m n o p q r s t; do
   SECONDS=0
   cd ${nrun}${i}
 

@@ -9,7 +9,10 @@ conda activate rinrus
 
 SECONDS=0
 
-python ../add_chain.py -list pdblist.txt -chain 1/128/A 129/256/B 257/384/C
+# example is for chorismate mutase
+# chains specified as: first-res-of-chain/last-res-of-chain/chain-label
+# all other res given chain label W for waters.
+python $HOME/git/DeYonker-lab-scripts/add_chain.py -list pdblist.txt -chain 1/128/A 129/256/B 257/384/C
 
 if (( $SECONDS > 3600 )) ; then
     let "hours=SECONDS/3600"

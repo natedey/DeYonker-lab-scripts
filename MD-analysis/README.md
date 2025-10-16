@@ -9,8 +9,8 @@ everything was done with slurm array jobs because processing 360000 frames takes
 
 to process all in one (up to 20ns or so) use job_process_single which:
 1. runs cpptraj with extract.in to get all pdbs into folder called pdbs/
-2. runs rename.py to create subdirs of 1000 pdbs each (easier processing)
-3. copies job_addchain to each subdir and then submits to the queue
+2. runs rename.py to split the pdbs/ dir up into smaller dirs of 1000 pdbs each (easier processing)
+3. copies job_addchain to each of these new dirs and then submits to the queue
 	- job_addchain runs add_chain.py to add chain info to created pdbs
 
 for parallel processing of longer simulations done in sections use job_process_array.

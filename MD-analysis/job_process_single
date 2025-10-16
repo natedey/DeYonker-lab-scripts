@@ -15,14 +15,20 @@ conda activate AmberTools23
 
 SECONDS=0
 
-# extract
+# make pdbs directory if it doesn't exist yet. if it doesn't exist before running cpptraj, the pdb files won't be created
+if [ ! -d "pdbs" ]; then
+ mkdir pdbs
+fi
+
+# extract pdbs with cpptraj
 cpptraj -i extract.in
 
-# rename and reorg
-python ~/git/DeYonker-lab-scripts/MD-analysis/rename.py ${nrun}
+# rename pdbs with leading zeros so they sort properly, and reorg pdbs dir into pdbs_a, pdbs_b, etc (dirs of 1000 pdbs each)
+python ~/git/DeYonker-lab-scripts/MD-analysis/rename.py pdbs
 
-# add chains
+# add chains to everything. sets up a new slurm job in each directory to run everything simultaneously
 for i in a b c d e f g h i j k l m n o p q r s t; do
+ # checks if dir exists first in case less than 20000 pdbs/not all folders exist
  if [ -d "pdbs_$i" ]; then
   cd pdbs_$i
   ls *.pdb > pdblist.txt
@@ -32,6 +38,7 @@ for i in a b c d e f g h i j k l m n o p q r s t; do
  fi
 done
 
+# this just logs the time
 if (( $SECONDS > 3600 )) ; then
     let "hours=SECONDS/3600"
     let "minutes=(SECONDS%3600)/60"

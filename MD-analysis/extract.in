@@ -4,6 +4,7 @@ trajin ../08.equil.mdcrd
 trajin ../08.equil2.mdcrd
 trajin ../08.equil3.mdcrd
 trajin ../08.equil4.mdcrd
+trajin ../09.equil.mdcrd
 strip :Na+
 closest 600 :COR
 autoimage

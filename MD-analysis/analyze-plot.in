@@ -1,0 +1,21 @@
+parm ../2CHT_solv.prmtop
+reference ../2CHT_solv.inpcrd
+trajin ../08.equil.mdcrd
+trajin ../08.equil2.mdcrd
+trajin ../08.equil3.mdcrd
+trajin ../08.equil4.mdcrd
+
+strip :WAT
+strip :Na+
+
+rms All :1-384 reference out frame_rms_all.agr
+rms AllA :1-128 reference out frame_rms_allchain.agr
+rms AllB :129-256 reference out frame_rms_allchain.agr
+rms AllC :257-384 reference out frame_rms_allchain.agr
+rms Heavy :1-384&!@/H reference out frame_rms_heavy.agr
+rms HeavyA :1-128&!@/H reference out frame_rms_heavychain.agr
+rms HeavyB :129-256&!@/H reference out frame_rms_heavychain.agr
+rms HeavyC :257-384&!@/H reference out frame_rms_heavychain.agr
+
+run
+exit

@@ -1,0 +1,8 @@
+pdb: SETPDB
+seed: A:128
+rin_program: manual
+res_atoms_file: SETRESATOMS
+model: max
+model_prot_ignore_ids: A:128
+qm_input_format: gau-xtb
+seed_charge: -2

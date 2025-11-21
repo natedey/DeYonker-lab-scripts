@@ -3,12 +3,15 @@
 # MD-to-QM-cluster part 1: set up workdirs and RINRUS inputs
 # Created by D Wappett Nov 2025
 # -----------------------------
+# PLEASE READ CORRESPONDING INSTRUCTIONS FILE BEFORE RUNNING THIS SCRIPT!!!
+# The script MOVES files, not copies. DO NOT USE IT WITH THE ORIGINAL PDB FILES. YOU copy what you need first, then script preps that set
+# -----------------------------
 # Info about this script:
 # Takes a directory of pdbs extracted from MD. If using individual res_atoms files, these should be present too and match pdb names
 #  (like output of MD_batch_rin: each 2cht.N.pdb file has corresponding 2cht.N.res_atoms.dat for example)
 # Sets up a QM workdir for each pdb and workdirs are chunked up into subsets of N frames so you can work on manageable batches sequentially
 #  (this makes it easier to keep track of progress)
-# Within each workdir, creates driver input file from template and creates file listing all workdirs for subsequently running driver 
+# Within each workdir, creates driver input file from template and then uses it to run driver. Also prepares slurm script if requested
 
 
 # Define help message
@@ -19,7 +22,7 @@ Help()
   echo "n:  break up into sections of n pdbs"
   echo "r:  rinrus driver input template (if not rinrus.inp)"
   echo "b:  batch res atoms file to use instead of individual ones"
-  echo "j:  input file format for making job submission script (g16/orca6)"
+  echo "j:  input file format for making job submission script (g16/gauxtb/orca6)"
   echo "h:  Print this information"
 }
 
@@ -76,7 +79,6 @@ for i in $(ls *.pdb); do
   f=${i%.pdb} 
   # get just number from filename, assuming pdbs made with cpptraj keepext so names are like "[whatever].00001.pdb" 
   fnum=$(echo $f | awk -F . '{print $NF}') 
-  echo $fnum ###for testing###
   # if this is first of new subset, set starting frame number and create directory tempdir
   if [[ "$startnum" == "x" ]]; then
     startnum=$fnum 
@@ -109,6 +111,8 @@ for i in $(ls *.pdb); do
   # if -j arg used, then also run relevant version of gen_jobscript to make slurm submission file
   if [[ "$job" == "g16" ]]; then
     gen_jobscript_g16.sh
+  elif [[ "$job" == "gau*xtb" ]]; then
+    gen_jobscript_gauxtb.sh
   elif [[ "$job" == "orca6" ]]; then
     mv 1.inp orca.inp # use orca.inp instead if it's an orca file
     gen_jobscript_orca6.sh
@@ -120,7 +124,6 @@ for i in $(ls *.pdb); do
   if [ $ct -eq $n ]; then
     mv tempdir f${startnum}-f$fnum
     sed -i "s/tempdir/f${startnum}-f$fnum/" workdirs.txt
-    echo "finished subset dir f${startnum}-f$fnum" ###for testing###
     ct=1
     startnum=x
   else
@@ -132,6 +135,5 @@ done
 if [ -d "tempdir" ]; then
   mv tempdir f${startnum}-f$fnum
   sed -i "s/tempdir/f${startnum}-f$fnum/" workdirs.txt
-  echo "finished subset dir f${startnum}-f$fnum" ###for testing###
 fi
 

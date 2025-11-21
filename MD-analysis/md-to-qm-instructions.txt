@@ -1,11 +1,22 @@
-Instructions for setting up QM-cluster modeling work directories from set of MD frames
+Info about setting up QM-cluster modeling work directories from set of MD frames with md-to-qm-setup.sh
+
+!!! IMPORTANT !!!
+- The script MOVES files, not copies. DO NOT USE IT WITH THE ORIGINAL PDB FILES. YOU copy what you need first, then script preps that set
+- The script runs RINRUS to make the models. Make sure your rinrus conda environment is activated so this works!
+- Stuff gets messy if you have to restart script partway. Make sure your rinrus.inp driver input works fine first.
+
+
+Instructions:
 
 1. Make and get into parent QM computations dir
 	- Imo this should be new dir on same level as MD simulation dir rather than nested in the analysis files where pdbs first extracted
 	- For chorismate mutase/stuff with multiple active sites: have one parent QM dir for each so contents only organised by frames
 
 2. Copy the desired frame pdbs and either all their individual res_atoms files or one batch_res_atoms file into this parent QM dir
-	- Need to have done batch RIN analysis with job_batchrin, the individual res_atoms files will be in a dir like probe_analysis_outputs
+	- If you did RIN analysis in MD analysis dir with job_batchrin, ind. res_atoms files will be in a dir like "probe_analysis_outputs"
+	- If using a batch_res_atoms file, make sure you ran MD_batch_rin with the waters option!
+	- Use seq to get range of zero-padded frame nums to make copying easier. Eg for frames 00001-00100 (1-100 as 5 digit nums):
+	    for i in $(seq -f "%05g" 1 100); do cp [extracted-pdb-dir]/2cht.$i.pdb .; done
 
 3. Create template rinrus.inp driver input file that will be used to create models. example provided
 	- give pdb option placeholder value "SETPDB" which will be changed by script for each frame
@@ -16,8 +27,12 @@ Instructions for setting up QM-cluster modeling work directories from set of MD 
 
 4. Strongly recommended: when you first prepare your rinrus.inp template, run it for one pdb manually to check that no extra input requested
 	- easier to fix anything missing before doing the full setup than it is to change every rinrus.inp in every workdir later!!
+	- copy the files into a test dir and run in there so that it doesn't mess with the main system
 
-4. Run the setup script md-to-qm-setup.sh
+At this point the QM dir should have all your pdbs, your res_atoms file(s), and a rinrus.inp template.
+You should also have your rinrus conda environment activated so that RINRUS runs correctly.
+
+5. Run the setup script md-to-qm-setup.sh
 	- makes individual workdirs for each frame, chunked up into subsets of size N (default 100, use "-n [num]" to set something else)
 	- will use individual res_atoms.dat by default, if you want to use one batch_res_atoms for all then use "-b [batch res atoms file]"
 	- copies rinrus.inp into each workdir and changes the SETPDB/SETRESATOMS placeholders to the right names in there

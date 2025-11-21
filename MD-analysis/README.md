@@ -29,3 +29,8 @@ analyze.in is a cpptraj input file for getting rmsds, rms fluctuations etc. runs
 job_batchrin uses slurm array to run MD_batch_rin script. requires pdbs extracted and organised as above. currently set up to do probe and arpeggio on each active site of CM. creates tarballs of probe/arpeggio files to save space.
 
 probe-violins.py plots stuff from the MD_batch_rin outputs made after doing job_batchrin. again currently specific to CM - creates violin plots of contact counts for each FG in each of the three active sites. 
+
+
+## making QM-cluster models from MD frames
+
+setting up a batch of individual frame working directories for QM-cluster calcs is done with md-to-qm-setup.sh. see instructions in md-to-qm-instructions.txt for more info

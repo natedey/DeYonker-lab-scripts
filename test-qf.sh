@@ -64,7 +64,7 @@ for ((i=1;i<=$njob;i++)); do
   d=$(awk 'NR=='$i' {print $(NF-1)}' .qftmp.txt)
   p=$(awk 'NR=='$i' {print $NF}' .qftmp.txt)
   if [ -f "${p}/1.out" ]; then 
-    comp=$(test-completion-daw.sh $p | grep "${p}/1.out" | awk '{print $1}' | sed "s/://")
+    comp=$(test-completion.sh $p | grep "${p}/1.out" | awk '{print $1}' | sed "s/://")
   else
     comp="none"
   fi

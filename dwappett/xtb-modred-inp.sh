@@ -3,7 +3,8 @@
 ### script to write xtb inputs and then add modred ts constraints to input file
 ### usage: xtb-modred-inp.sh [pdb] [lig name]
 
-if grep -qv $2 $1; then
+#if grep -qv $2 $1; then
+if [[ "$2" == "COR" ]] && [[ "$(grep $2 $1 | wc -l | tr -d ' ')" == "0" ]]; then
     sed -i "s/TSA A 203/COR A 128/" $1
     for i in $(grep -n COR $1 | awk -F : '{print $1}'); do
         sed -i "${i}s/HETATM/ATOM  /" $1

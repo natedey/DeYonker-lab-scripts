@@ -1,20 +1,23 @@
 #!/bin/bash
-#SBATCH --ntasks=NPROC
-#SBATCH --nodes=1
+#SBATCH --ntasks=2
 #SBATCH --partition=acomputeq
-#SBATCH --time=100:00:00
+#SBATCH --time=12:00:00
 #SBATCH --job-name=ORCAJOB
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --mem=TOTMEM
+#SBATCH --mem=8GB
 
 ##### Specify name for input and output files #####
-name=INPN
+name=orca
 
-export orcadir=/home/ndyonker/src/orca_6_0_0
+#export orcadir=/home/ndyonker/src/orca_6_0_0
+#echo $orcadir
+#export PATH=$orcadir:$PATH
+module load orca/6.1.0 
+export orcadir=/opt/ohpc/pub/apps/uofm/orca/6.1.0/bin/
 echo $orcadir
 export PATH=$orcadir:$PATH
- 
+
 ##### Go to submission directory #####
 cd $SLURM_SUBMIT_DIR
 
@@ -42,13 +45,13 @@ export TMPDIR=/scratch/$USER/$SLURM_JOB_ID/
 
 cp $SLURM_SUBMIT_DIR/$name.inp $SCRATCHDIR/
 cp $SLURM_SUBMIT_DIR/$name.hess $SCRATCHDIR/
-#cp  $SLURM_SUBMIT_DIR/$name.gbw $SCRATCHDIR/
 #cp  $SLURM_SUBMIT_DIR/*.xyz $SCRATCHDIR/
 
 cd $SCRATCHDIR
 
 ### Executable: Input-Ouput #####
 $orcadir/orca $name.inp '--bind-to core:overload-allowed' > $SLURM_SUBMIT_DIR/$name.out
+#orca $name.inp > $SLURM_SUBMIT_DIR/$name.out
 
 rm -rf *.tmp*
 cp $SCRATCHDIR/* $SLURM_SUBMIT_DIR/

@@ -1,0 +1,5 @@
+nprocs: 2
+maxcore: 4
+jobtype: opt numfreq
+method: Native-GFN2-xTB
+solvent: ALPB(water)

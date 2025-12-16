@@ -87,7 +87,11 @@ for i in "${directories[@]}"; do
    echo "orca.out is empty:   " $i
   else
    if [ -n "`tail -n 5 $i/orca.out | grep "ORCA TERMINATED NORMALLY"`" ]; then
-     echo "ORCA completed:      " $i/orca.out
+     if grep -q "The optimization did not converge but reached the maximum" $i/orca.out; then
+       echo "ORCA hit max cycles: " $i/orca.out
+     else
+       echo "ORCA completed:      " $i/orca.out
+     fi
    elif [ -n "`tail -n 3 $i/orca.out | grep "Error"`" ]; then
      echo "ORCA failed:         " $i/orca.out
    else

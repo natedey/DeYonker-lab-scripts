@@ -30,6 +30,8 @@ Help()
 n=100
 resat="individual"
 rinp="rinrus.inp"
+
+
 job="none"
 
 # Read input arguments
@@ -116,6 +118,9 @@ for i in $(ls *.pdb); do
   elif [[ "$job" == "orca6" ]]; then
     mv 1.inp orca.inp # use orca.inp instead if it's an orca file
     gen_jobscript_orca6.sh
+  elif [[ "$job" == "orcaxtb" ]]; then
+    mv 1.inp orca.inp
+    cp ~/git/DeYonker-lab-scripts/dwappett/1-orcaxtb 1
   fi
   cd -
 

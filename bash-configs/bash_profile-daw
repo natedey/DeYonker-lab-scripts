@@ -121,6 +121,7 @@ function create-simspec() { command echo "G 20. nm" > input ; command echo "100.
 function makeonecar() { command make-car.sh ; command cerius-xyz carcoords; command scp carcoords.car 141.225.147.5:"$@"; }
 function checknodes() { command mdiag -n -v | awk '{ printf "%-4s  %-10s   %-5s   %-5s   %-20s\n", $1, $2, $3, $11, $13}' | head -n -4 ; }
 function xdone() { command egrep 'Step number|NIter=   |NO |YES|Predicted' "$@" ; }
+function orcadone() { command egrep 'GEOMETRY OPTIMIZATION CYCLE | observed energy change | RMS gradient | MAX gradient | RMS step | MAX step |FINAL SINGLE POINT ENERGY ' "$@" ; }
 
 alias hinv='/usr/local/bin/lhinv'
 alias xt="xterm -n $hostname -T $hostname -sb -sl 4000 -bg darkgrey -fg black&"

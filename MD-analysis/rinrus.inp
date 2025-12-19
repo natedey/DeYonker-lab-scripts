@@ -4,5 +4,6 @@ rin_program: manual
 res_atoms_file: SETRESATOMS
 model: max
 model_prot_ignore_ids: A:128
-qm_input_format: gau-xtb
+qm_input_format: orca
+qm_input_template: ~/git/DeYonker-lab-scripts/dwappett/orcaxtb_intmp.txt
 seed_charge: -2

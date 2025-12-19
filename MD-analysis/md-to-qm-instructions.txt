@@ -18,7 +18,7 @@ Instructions:
 	- Use seq to get range of zero-padded frame nums to make copying easier. Eg for frames 00001-00100 (1-100 as 5 digit nums):
 	    for i in $(seq -f "%05g" 1 100); do cp [extracted-pdb-dir]/2cht.$i.pdb .; done
 
-3. Create template rinrus.inp driver input file that will be used to create models. example provided
+3. Prepare template rinrus.inp driver input file that will be used to create models. example provided
 	- give pdb option placeholder value "SETPDB" which will be changed by script for each frame
 	- rin_program set to manual, give res_atoms_file placeholder value "SETRESATOMS" which will be changed by script for each frame
 	- make sure at least one model_prot_ignore... option is set so that the driver doesn't ask for input at this step
@@ -37,7 +37,7 @@ You should also have your rinrus conda environment activated so that RINRUS runs
 	- will use individual res_atoms.dat by default, if you want to use one batch_res_atoms for all then use "-b [batch res atoms file]"
 	- copies rinrus.inp into each workdir and changes the SETPDB/SETRESATOMS placeholders to the right names in there
 	  use "-r whatever.inp" to specify alternate inp filename (versions in workdirs will always be turned into rinrus.inp tho)
-	- will also make slurm submission script if you run with "-j g16" (gaussian/gau-xtb inps) or "-j orca6" (orca inps)
+	- will also make slurm submission script if you run with "-j g16" (gaussian/gau-xtb inps) or "-j orca6" (orca inps) or "-j orcaxtb" (orca xtb which we have a diff default 1 file for)
 	- subset folders are named as range from lowest to highest frame number contained. might not always be best option but easy standard
 	- also adds a list of all workdirs it has set up to file workdirs which we can use for checking/collecting outputs later
 

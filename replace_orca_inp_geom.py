@@ -24,7 +24,7 @@ def replace_inp_xyz(inplines,coords,geomlabel):
         for j in [1,2,3]:
             #newline[j] = "%.6f"%coords[i][j-1]
             #newline[j] = "%8.3f"%coords[i][j-1]
-            newline[j] = coords[i][j-1]
+            newline[j] = "%.14f"%coords[i][j-1]
         if len(newline) > 4:
             newline[4] = " "+newline[4]
         newline = " ".join(newline)+"\n"

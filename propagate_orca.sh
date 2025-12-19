@@ -51,10 +51,10 @@ fi
 if [ -f $2.gbw ]; then
 	cp -i $2.gbw $count-$1-gbw
 fi
-if [ -f $1.xtbw ]; then
+if [ -f $2.xtbw ]; then
         cp -i $2.xtbw $count-$1-xtbw
 fi
-if [ -f $1.hess ]; then
+if [ -f $2.hess ]; then
 	cp -i $2.hess $count-$1-hess
 fi
 

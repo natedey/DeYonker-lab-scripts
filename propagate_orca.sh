@@ -57,5 +57,8 @@ fi
 if [ -f $2.hess ]; then
 	cp -i $2.hess $count-$1-hess
 fi
+if [ -f $2_trj.xyz ]; then
+        cp -i $2_trj.xyz $count-$1-trjxyz
+fi
 
 ls

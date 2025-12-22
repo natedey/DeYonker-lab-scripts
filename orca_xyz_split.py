@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 
 def split_xyz_file(input_file):
@@ -19,7 +21,7 @@ def split_xyz_file(input_file):
                 # If we encounter a digit, it indicates a new geometry
                 if geometry:
                     # Save the current geometry to a file
-                    output_file = f"geometry_{geometry_count}.xyz"
+                    output_file = f"geometry_{str(geometry_count).zfill(3)}.xyz"
                     with open(output_file, 'w') as out_file:
                         out_file.writelines(geometry)
                     print(f"Written: {output_file}")

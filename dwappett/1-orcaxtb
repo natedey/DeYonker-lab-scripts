@@ -24,7 +24,8 @@ cd $SLURM_SUBMIT_DIR
 
 ##### Module load #####
 #module load openmpi/4.1.5rc2/hpcx
-module load openmpi/5.0.1/aocc.4.1.0/noncuda
+#module load openmpi/5.0.1/aocc.4.1.0/noncuda
+module load openmpi/4.1.6/gcc.8.5.0/noncuda
 
 # Define the variable RSH_COMMAND for communication 
 # between nodes for starting independent calculations 

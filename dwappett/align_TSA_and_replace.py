@@ -61,19 +61,22 @@ if __name__ == '__main__':
         #    logf.write(f"pair_fit (tspdb and resn TSA and elem O), (modelpdb and resn TSA and elem O)\n")
         logf.write(f"pair_fit (tspdb and resn TSA and elem O), (modelpdb and resn {lig} and elem O)\n")
         logf.write(f'save {newpdb}, (tspdb and resn TSA)\n')
-        logf.write(f"list1 = []\niterate (tspdb and resn TSA), list1.append((chain,resi,resn,name))\nlist2 = []\niterate (modelpdb and not resn {lig}), list2.append((chain,resi,resn,name))\n")
+        logf.write(f"list1 = []\niterate (tspdb and resn TSA), list1.append((chain,resi,resn,name))\nlist2 = []\niterate (modelpdb and not resn COR and not resn TSA), list2.append((chain,resi,resn,name))\n")
         logf.write("""python
-print('\\n')
+clashes = []
 for at1 in list1:
     for at2 in list2:
         sel1 = f"tspdb//{at1[0]}/{at1[1]}/{at1[3]}"
         sel2 = f"modelpdb//{at2[0]}/{at2[1]}/{at2[3]}"
         d = cmd.get_distance(atom1=sel1,atom2=sel2)
-        if d < 1.2:
+        if d <= 1:
             d = "%0.2f"%d
-            print(f'Atoms {at1[0]}/{at1[1]}/{at1[2]}/{at1[3]} and {at2[0]}/{at2[1]}/{at2[2]}/{at2[3]} are only {d} apart!')
+            clashes.append(f'Atoms {at1[0]}/{at1[1]}/{at1[2]}/{at1[3]} and {at2[0]}/{at2[1]}/{at2[2]}/{at2[3]} are only {d} apart!')
+if clashes:
+    with open('tsguess_close_atoms.txt','w+') as f:
+        f.write('\\n'.join(clashes))
 python end""")
-
+#print(f'Atoms {at1[0]}/{at1[1]}/{at1[2]}/{at1[3]} and {at2[0]}/{at2[1]}/{at2[2]}/{at2[3]} are only {d} apart!')
 
     cmd = "pymol -qc log.pml"
     system_run(cmd)

@@ -21,7 +21,8 @@ fi
 
 
 ngrep=$(( $2 + 5 ))
-echo "$2" > tsconstrained.xyz
-echo "extracted xyz" >> tsconstrained.xyz
-grep -A $ngrep "FINAL ENERGY EVALUATION AT THE STATIONARY POINT" $1 >> tsconstrained.xyz
-sed -i "/\*/d; /-/d; /CARTESIAN COORDINATES/d" tsconstrained.xyz
+xyzname=${1//.out/.xyz}
+echo "$2" > $xyzname
+echo "extracted xyz" >> $xyzname
+grep -A $ngrep "FINAL ENERGY EVALUATION AT THE STATIONARY POINT" $1 >> $xyzname
+sed -i "/\*/d; /-/d; /CARTESIAN COORDINATES/d" $xyzname

@@ -109,17 +109,21 @@ for i in $(ls *.pdb); do
   RINRUS_driver.py
   # find name of created input file and change to 1.inp to match standard workflow
   qminp=$(ls model_*.inp)
-  mv $qminp 1.inp
+  if grep -q "orca" rinrus.inp; then
+    mv $qminp orca.inp
+  else
+    mv $qminp 1.inp
+  fi
   # if -j arg used, then also run relevant version of gen_jobscript to make slurm submission file
   if [[ "$job" == "g16" ]]; then
     gen_jobscript_g16.sh
   elif [[ "$job" == "gau*xtb" ]]; then
     gen_jobscript_gauxtb.sh
   elif [[ "$job" == "orca6" ]]; then
-    mv 1.inp orca.inp # use orca.inp instead if it's an orca file
+    #mv 1.inp orca.inp # use orca.inp instead if it's an orca file
     gen_jobscript_orca6.sh
   elif [[ "$job" == "orcaxtb" ]]; then
-    mv 1.inp orca.inp
+    #mv 1.inp orca.inp
     cp ~/git/DeYonker-lab-scripts/dwappett/1-orcaxtb 1
   fi
   cd -

@@ -14,8 +14,8 @@ name=orca
 #export orcadir=/home/ndyonker/src/orca_6_0_0
 #echo $orcadir
 #export PATH=$orcadir:$PATH
-module load orca/6.1.0 
-export orcadir=/opt/ohpc/pub/apps/uofm/orca/6.1.0/bin/
+module load orca/6.1.1 
+export orcadir=/opt/ohpc/pub/apps/uofm/orca/6.1.1
 echo $orcadir
 export PATH=$orcadir:$PATH
 
@@ -23,9 +23,7 @@ export PATH=$orcadir:$PATH
 cd $SLURM_SUBMIT_DIR
 
 ##### Module load #####
-#module load openmpi/4.1.5rc2/hpcx
-#module load openmpi/5.0.1/aocc.4.1.0/noncuda
-module load openmpi/4.1.6/gcc.8.5.0/noncuda
+module load openmpi/4.1.8/gcc.8.5.0/noncuda
 
 # Define the variable RSH_COMMAND for communication 
 # between nodes for starting independent calculations 

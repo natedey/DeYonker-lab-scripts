@@ -1,0 +1,26 @@
+#!/bin/bash
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=1G
+#SBATCH --time=04:00:00
+#SBATCH --partition=acomputeq
+
+source ~/.bashrc
+conda activate rinrus
+
+SECONDS=0
+
+~/git/DeYonker-lab-scripts/MD-analysis/md-to-qm-setup.sh -j orcaxtb
+
+if (( $SECONDS > 3600 )) ; then
+    let "hours=SECONDS/3600"
+    let "minutes=(SECONDS%3600)/60"
+    let "seconds=(SECONDS%3600)%60"
+    echo "Completed in $hours hour(s), $minutes minute(s) and $seconds second(s)"
+elif (( $SECONDS > 60 )) ; then
+    let "minutes=(SECONDS%3600)/60"
+    let "seconds=(SECONDS%3600)%60"
+    echo "Completed in $minutes minute(s) and $seconds second(s)"
+else
+    echo "Completed in $SECONDS seconds"
+fi
+

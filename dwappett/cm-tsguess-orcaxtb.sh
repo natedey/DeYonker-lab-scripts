@@ -7,7 +7,7 @@
 # generate tsguess.pdb
 align_TSA_and_replace.py -modpdb $1 -md
 # change ts res name back to cor/record type back to atom to match original template pdb
-sed -i "s/HETATM/ATOM  /; s/TSA/COR/" tsguess.pdb
+#sed -i "s/HETATM/ATOM  /; s/TSA/COR/" tsguess.pdb
 # create input file
 write_input.py -pdb tsguess.pdb -format orca -intmp ~/git/DeYonker-lab-scripts/dwappett/orcaxtb_intmp.txt -c -2 -inpn orca.inp
 # work out which bonds to constrain and add constraints to inp

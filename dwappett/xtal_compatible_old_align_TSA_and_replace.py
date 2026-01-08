@@ -19,24 +19,16 @@ def system_run(cmd):
 def makeguesspdb(modelpdb,newpdb,lig):
     mod_pdb, res_info, tot_charge_t = read_pdb(modelpdb)
     new_pdb, binfo, tot_charge = read_pdb(newpdb)
-    newcoord = {atom[2].strip(): {'x': atom[8], 'y': atom[9], 'z': atom[10]} for atom in new_pdb}
-    #temporary_pdb = []
-    #tsadone = 0
+    temporary_pdb = []
+    tsadone = 0
     for line in mod_pdb:
-        if line[4].strip() == lig:
-            #atomname=line[2],x=line[8],y=line[9],z=line[10]
-            line[8] = newcoord[line[2].strip()]['x']
-            line[9] = newcoord[line[2].strip()]['y']
-            line[10] = newcoord[line[2].strip()]['z']
-        #if line[4].strip() == lig and tsadone == 0:
-        #    temporary_pdb += new_pdb
-        #    #temporary_pdb.append(new_pdb)
-        #    tsadone = 1
-        #elif line[4].strip() != lig:
-        #    temporary_pdb.append(line)
- 
-    #write_pdb('tsguess.pdb',temporary_pdb)
-    write_pdb('tsguess.pdb',mod_pdb)   
+        if line[4].strip() == lig and tsadone == 0:
+            temporary_pdb += new_pdb
+            #temporary_pdb.append(new_pdb)
+            tsadone = 1
+        elif line[4].strip() != lig:
+            temporary_pdb.append(line) 
+    write_pdb('tsguess.pdb',temporary_pdb)    
 
 ##########
 # align optimized ts with ligand in optimized model

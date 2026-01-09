@@ -4,7 +4,8 @@ SECONDS=0
 
 for i in $(cat new_dirs.txt); do
  echo $i
- for d in $i/f*; do
+ cd $i
+ for d in f*; do
   if grep -q "ORCA TERMINATED NORMALLY" $d/orca.out; then
    if grep -q "THE OPTIMIZATION HAS CONVERGED" $d/orca.out; then echo $d >> check-new-jobs_done.txt
    elif grep -q "The optimization did not converge" $d/orca.out; then echo $d >> check-new-jobs_maxcyc.txt
@@ -15,6 +16,7 @@ for i in $(cat new_dirs.txt); do
    fi
   fi
  done
+ cd ..
 done
 
 if (( $SECONDS > 3600 )) ; then

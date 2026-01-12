@@ -56,7 +56,7 @@ for i in "${directories[@]}"; do
     else
      echo "completed:           " $i/1.out
     fi
-   elif [ -n "`tail -n 30 $i/1.out | grep Error`" ] || [ -n "`grep 'In source file ml0.f' $i/1.out`" ] ; then
+   elif [ -n "`tail -n 30 $i/1.out | grep Error`" ] || [ -n "`grep 'In source file ml0.f' $i/1.out`" ] || [ -n "`tail -n 5 $i/1.out | grep "aborting the run"`" ]; then
      echo "failed:              " $i/1.out
    elif [ -n "`tail -n 5 $i/1.out | grep "Molpro calculation terminated"`" ]; then
      echo "Molpro completed:    " $i/1.out
@@ -76,7 +76,7 @@ for i in "${directories[@]}"; do
   else
    if [ -n "`tail -n 5 $i/OPT.out | grep "ORCA TERMINATED NORMALLY"`" ]; then
      echo "ORCA completed:      " $i/OPT.out
-   elif [ -n "`tail -n 3 $i/OPT.out | grep "Error"`" ]; then
+   elif [ -n "`tail -n 5 $i/OPT.out | grep "aborting the run"`" ]; then
      echo "ORCA failed:         " $i/OPT.out
    else
      echo "incomplete:          " $i/OPT.out
@@ -92,7 +92,7 @@ for i in "${directories[@]}"; do
      else
        echo "ORCA completed:      " $i/orca.out
      fi
-   elif [ -n "`tail -n 3 $i/orca.out | grep "Error"`" ]; then
+   elif [ -n "`tail -n 5 $i/orca.out | grep "aborting the run"`" ]; then
      echo "ORCA failed:         " $i/orca.out
    else
      echo "incomplete:          " $i/orca.out

@@ -42,9 +42,9 @@ echo "$SLURM_NTASKS"
 
 
 ##### CLEAN UP ANYTHING LEFT IN SCRATCH FROM PREVIOUS JOBS FOR THIS SYSTEM #####
-#for s in $(ls $CALCDIR/slurm-*.out | awk -F/ '{print $NF}' | sed "s/slurm-//; s/.out//"); do
-# if [ -d /scratch/$USER/$s ]; then rm -r /scratch/$USER/$s; fi
-#done
+for s in $(ls $CALCDIR/slurm-*.out | awk -F/ '{print $NF}' | sed "s/slurm-//; s/.out//"); do
+ if [ -d /scratch/$USER/$s ]; then echo "removing previous calc directory $s from scratch"; rm -r /scratch/$USER/$s; fi
+done
 
 ##### TMP scratch directory #####
 export SCRATCHDIR=/scratch/$USER/$SLURM_JOB_ID/

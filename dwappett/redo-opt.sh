@@ -2,14 +2,15 @@
 # DAW 2025/01/12
 # redo-opt.sh arg1 arg2
 # arg1 is file listing dirs to do this for (required)
-# arg2 is "orcaerror" or "optcrash" 
+# arg2 is "orcaerror" or "optcrash" or "maxcyc" 
 # - orcaerror: restart from beginning
 # - optcrash: restart from beginning with calc_hess keyword
+# - maxcyc: same as optcrash
 
 for i in $(cat $1); do
  cd $i
- if [[ "$2" == "optcrash" ]]; then
-  propagate_orca.sh optcrash
+ if [[ "$2" == "optcrash" ]] || [[ "$2" == "optcrash" ]]; then
+  propagate_orca.sh $2
   sed -i "s/%geom/%geom\n  Calc_Hess true/" orca.inp
  fi
  cd -

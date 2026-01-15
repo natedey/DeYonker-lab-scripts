@@ -12,7 +12,7 @@ for i in $(cat $1); do
  cd $i
  if [[ "$2" == "optcrash" ]] || [[ "$2" == "maxcyc" ]]; then
   propagate_orca.sh $2
-  if greq -q "Calc_Hess" orca.inp; then
+  if grep -q "Calc_Hess" orca.inp; then
    sed -i "s/Calc_Hess true/Calc_Hess true\n  Recalc_Hess 200/" orca.inp
   else
    sed -i "s/%geom/%geom\n  Calc_Hess true/" orca.inp

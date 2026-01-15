@@ -4,14 +4,19 @@
 # arg1 is file listing dirs to do this for (required)
 # arg2 is "orcaerror" or "optcrash" or "maxcyc" 
 # - orcaerror: restart from beginning
-# - optcrash: restart from beginning with calc_hess keyword
+# - optcrash: restart from beginning with calc_hess keyword, 
+#    if calc_hess already present then add recalc_hess as well
 # - maxcyc: same as optcrash
 
 for i in $(cat $1); do
  cd $i
- if [[ "$2" == "optcrash" ]] || [[ "$2" == "optcrash" ]]; then
+ if [[ "$2" == "optcrash" ]] || [[ "$2" == "maxcyc" ]]; then
   propagate_orca.sh $2
-  sed -i "s/%geom/%geom\n  Calc_Hess true/" orca.inp
+  if greq -q "Calc_Hess" orca.inp; then
+   sed -i "s/Calc_Hess true/Calc_Hess true\n  Recalc_Hess 200/" orca.inp
+  else
+   sed -i "s/%geom/%geom\n  Calc_Hess true/" orca.inp
+  fi
  fi
  cd -
 done
@@ -25,5 +30,5 @@ for j in $(cat check-new-jobs_$2.txt); do
   joblist=$joblist","$((10#${j#f}))
  fi
 done
-sed -i "s/ASTART-AEND\%4/${joblist}/" 1-array-redo-$2
-sed -i "s/time=12:00:00/time=24:00:00/" 1-array-redo-$2
+sed -i "s/ASTART-AEND\%4/${joblist}%1/" 1-array-redo-$2
+sed -i "s/time=12:00:00/time=48:00:00/" 1-array-redo-$2

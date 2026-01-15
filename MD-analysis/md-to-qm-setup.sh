@@ -21,7 +21,7 @@ Help()
   echo "Arguments:"
   echo "n:  break up into sections of n pdbs"
   echo "r:  rinrus driver input template (if not rinrus.inp)"
-  echo "b:  batch res atoms file to use instead of individual ones"
+  echo "b:  use batch res atoms files instead (just changes expected file name, you need to copy over correct batch res_atoms files)"
   echo "j:  input file format for making job submission script (g16/gauxtb/orca6)"
   echo "h:  Print this information"
 }
@@ -35,7 +35,7 @@ rinp="rinrus.inp"
 job="none"
 
 # Read input arguments
-while getopts ":n:r:b:j:h:" option; do
+while getopts ":n:r:j:bh" option; do
   case $option in
     n)  # size of subsets of workdirs
         if [[ $OPTARG ]]; then
@@ -48,9 +48,10 @@ while getopts ":n:r:b:j:h:" option; do
         fi
         ;;
     b)  # batch res atoms file if using that
-        if [[ $OPTARG ]]; then
-          resat=${OPTARG}
-        fi
+	resat="batch"
+        #if [[ $OPTARG ]]; then
+        #  resat=${OPTARG}
+        #fi
         ;;
     j)  # 
         if [[ $OPTARG ]]; then
@@ -97,8 +98,8 @@ for i in $(ls *.pdb); do
     mv $f.res_atoms.dat tempdir/f$fnum/
     sed -i "s/SETPDB/$i/; s/SETRESATOMS/$f.res_atoms.dat/" tempdir/f$fnum/rinrus.inp
   else
-    cp $resat tempdir/$f/
-    sed -i "s/SETPDB/$i/; s/SETRESATOMS/$resat/" tempdir/f$fnum/rinrus.inp
+    mv batch_res_atoms.$f.dat tempdir/f$fnum/
+    sed -i "s/SETPDB/$i/; s/SETRESATOMS/batch_res_atoms.$f.dat/" tempdir/f$fnum/rinrus.inp
   fi
   # log workdir in list
   echo "tempdir/f$fnum" >> workdirs.txt

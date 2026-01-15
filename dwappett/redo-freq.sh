@@ -18,9 +18,9 @@ for i in $(cat $1); do
    replace_orca_inp_geom.py
    sed -i "s/opt //" orca.inp
    if [[ "$joblist" == "none" ]]; then
-    joblist=$((10#${j#f}))
+    joblist=$((10#${i#f}))
    else
-    joblist=$joblist","$((10#${j#f}))
+    joblist=$joblist","$((10#${i#f}))
    fi
   else echo "error propagating orca.inp for $i, not overwriting" >> freq-restart-issues.txt
   fi

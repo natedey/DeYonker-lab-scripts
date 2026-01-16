@@ -31,4 +31,4 @@ for j in $(cat check-new-jobs_$2.txt); do
  fi
 done
 sed -i "s/ASTART-AEND\%4/${joblist}%1/" 1-array-redo-$2
-sed -i "s/time=12:00:00/time=48:00:00/" 1-array-redo-$2
+sed -i "s/time=24:00:00/time=48:00:00/" 1-array-redo-$2

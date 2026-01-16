@@ -5,7 +5,7 @@ SECONDS=0
 for i in $(cat new_dirs.txt); do
  echo $i
  cd $i
- rm check-new-jobs_done.txt check-new-jobs_maxcyc.txt check-new-jobs_freqcrash.txt check-new-jobs_optcrash.txt check-new-jobs_orcaerror.txt check-new-jobs_CHECK_MANUALLY.txt 2> /dev/null
+ rm check-new-jobs_done.txt check-new-jobs_maxcyc.txt check-new-jobs_freqcrash.txt check-new-jobs_optcrash.txt check-new-jobs_orcaerror.txt check-new-jobs_CHECK_MANUALLY.txt 1-array* 2> /dev/null
  for d in f*; do
    if grep -q "Geometry Optimization Run" $d/orca.out; then
      if grep -q "ORCA TERMINATED NORMALLY" $d/orca.out; then
@@ -15,7 +15,7 @@ for i in $(cat new_dirs.txt); do
       fi
      else
       if grep -q "THE OPTIMIZATION HAS CONVERGED" $d/orca.out; then echo $d >> check-new-jobs_freqcrash.txt
-      elif grep -q "aborting the run" $d/orca.out; then echo $d >> check-new-jobs_orcaerror.txt
+      elif [ -n "`tail -n 5 $d/orca.out | grep -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_"`" ]; then echo $d >> check-new-jobs_orcaerror.txt
       else echo $d >> check-new-jobs_optcrash.txt
       fi
      fi

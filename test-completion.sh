@@ -59,7 +59,7 @@ for i in "${directories[@]}"; do
    elif [ -n "`tail -n 30 $i/1.out | grep Error`" ] || [ -n "`grep 'In source file ml0.f' $i/1.out`" ]; then
      echo "failed:              " $i/1.out
    # check for range of possible orca error messages
-   elif [ -n "`tail -n 5 $i/1.out | grep -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_"`" ]; then
+   elif [ -n "`grep -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_" $i/1.out`" ]; then
      echo "failed:              " $i/1.out
    elif [ -n "`tail -n 5 $i/1.out | grep "Molpro calculation terminated"`" ]; then
      echo "Molpro completed:    " $i/1.out
@@ -67,7 +67,7 @@ for i in "${directories[@]}"; do
      echo "PSI4 completed:      " $i/1.out
    elif [ -n "`tail -n 15 $i/1.out | grep 'Thank you very much for using Q-Chem.'`" ] ; then
      echo "QChem completed:     " $i/1.out
-   elif [ -n "`tail -n 5 $i/1.out | grep "ORCA TERMINATED NORMALLY"`" ]; then 
+   elif [ -n "`tail -n 5 $i/1.out | grep "ORCA TERMINATED NORMALLY"`" ]; then
      echo "ORCA completed:      " $i/1.out
    else
      echo "incomplete:          " $i/1.out
@@ -79,7 +79,7 @@ for i in "${directories[@]}"; do
   else
    if [ -n "`tail -n 5 $i/OPT.out | grep "ORCA TERMINATED NORMALLY"`" ]; then
      echo "ORCA completed:      " $i/OPT.out
-   elif [ -n "`tail -n 5 $i/OPT.out | grep -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_"`" ]; then
+   elif [ -n "`grep -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_" $i/OPT.out`" ]; then
      echo "failed:              " $i/OPT.out
    else
      echo "incomplete:          " $i/OPT.out
@@ -92,10 +92,12 @@ for i in "${directories[@]}"; do
    if [ -n "`tail -n 5 $i/orca.out | grep "ORCA TERMINATED NORMALLY"`" ]; then
      if grep -q "The optimization did not converge but reached the maximum" $i/orca.out; then
        echo "ORCA hit max cycles: " $i/orca.out
+     elif grep -q "Aborting the run" $i/orca.out; then
+       echo "failed:              " $i/orca.out
      else
        echo "ORCA completed:      " $i/orca.out
      fi
-   elif [ -n "`tail -n 5 $i/orca.out | grep -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_"`" ]; then
+   elif [ -n "`grep -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_" $i/orca.out`" ]; then
      echo "failed:              " $i/orca.out
    else
      echo "incomplete:          " $i/orca.out

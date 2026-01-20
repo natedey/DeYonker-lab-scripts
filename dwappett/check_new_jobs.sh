@@ -11,7 +11,8 @@ for i in $(cat new_dirs.txt); do
      if grep -q "ORCA TERMINATED NORMALLY" $d/orca.out; then
       if grep -q "THE OPTIMIZATION HAS CONVERGED" $d/orca.out; then echo $d >> check-new-jobs_done.txt
       elif grep -q "The optimization did not converge" $d/orca.out; then echo $d >> check-new-jobs_maxcyc.txt
-      else echo "$d - orca.out terminated normally but neither converged nor hit max cycles" >> check-new-jobs_CHECK_MANUALLY.txt
+      elif grep -q "Geometry optimization failed" $d/orca.out; then echo "$d - geometry optimization failed" >> check-new-jobs_CHECK_MANUALLY.txt
+      else echo "$d - orca.out terminated normally but neither converged nor hit max cycles nor failed" >> check-new-jobs_CHECK_MANUALLY.txt
       fi
      else
       if grep -q "THE OPTIMIZATION HAS CONVERGED" $d/orca.out; then echo $d >> check-new-jobs_freqcrash.txt

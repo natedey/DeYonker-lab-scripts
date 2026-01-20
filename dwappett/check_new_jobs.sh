@@ -15,6 +15,7 @@ for i in $(cat new_dirs.txt); do
       fi
      else
       if grep -q "THE OPTIMIZATION HAS CONVERGED" $d/orca.out; then echo $d >> check-new-jobs_freqcrash.txt
+      elif grep -q "Recalc_Hess" $d/orca.out; then echo "$d - opt didn't finish but Recalc_Hess already added" >> check-new-jobs_CHECK_MANUALLY.txt
       elif [ -n "`tail -n 5 $d/orca.out | grep -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_"`" ]; then echo $d >> check-new-jobs_orcaerror.txt
       else echo $d >> check-new-jobs_optcrash.txt
       fi

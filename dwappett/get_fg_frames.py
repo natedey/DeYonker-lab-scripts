@@ -19,9 +19,9 @@ if __name__ == '__main__':
         print(f'reading rawdf from: {args.pkl}')
         df = pd.read_pickle(args.pkl)
         if args.fg and args.fg in df.index.levels[0]:
-            df.loc[args.fg,:]
             print(f'frames where fragment {args.fg} has contacts:')
-            print('\n'.join(list(df.loc[args.fg,:].index)))
+            print(df.loc[args.fg,'p_tot'])
+            #print('\n'.join(list(df.loc[args.fg,:].index)))
         else:
             print(f'fragment "{args.fg}" not in df index!')
     else:

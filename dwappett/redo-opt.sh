@@ -18,20 +18,28 @@ for 'optcrash'/'maxcyc', sequentially adds calchess and recalchess keywords to i
 'orcaerror' problems are often not orca's fault so input files are left unchanged
 "
 exit
+elif [ -z "$2" ]; then
+  echo "second argument missing. run as redo-opt.sh [file] [orcaerror/maxcyc/optcrash]"
+  exit
 fi
 
 for i in $(cat $1); do
  cd $i
  if [[ "$2" == "optcrash" ]] || [[ "$2" == "maxcyc" ]]; then
   propagate_orca.sh $2
-  if grep -q "Calc_Hess" orca.inp; then
-   if grep -q "Recalc_Hess" orca.inp
-    sed -i "s/Recalc_Hess 200/Recalc_Hess 100/" orca.inp
-   else
-    sed -i "s/Calc_Hess true/Calc_Hess true\n  Recalc_Hess 200/" orca.inp
-   fi
+  #if grep -q "Calc_Hess" orca.inp; then
+  # if grep -q "Recalc_Hess" orca.inp
+  #  sed -i "s/Recalc_Hess 200/Recalc_Hess 100/" orca.inp
+  # else
+  #  sed -i "s/Calc_Hess true/Calc_Hess true\n  Recalc_Hess 200/" orca.inp
+  # fi
+  #else
+  # sed -i "s/%geom/%geom\n  Calc_Hess true/" orca.inp
+  #fi
+  if ! grep -q "Calc_Hess" orca.inp; then
+   sed -i "s/%geom/%geom\n  Calc_Hess true\n  Recalc_Hess 200/" orca.inp
   else
-   sed -i "s/%geom/%geom\n  Calc_Hess true/" orca.inp
+   sed -i "s/Recalc_Hess 200/Recalc_Hess 100/" orca.inp
   fi
  fi
  cd -

@@ -32,15 +32,17 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
     for f in framedirs:
         print(f)
         # placeholders for values
-        fdata[f] = {'ligand': '', 'size':'', 'charge': '', 'reactant': '', 'product': '', 'dGa': '', 'dGr': '', 'tsvals': ['','','','','','','','',''], 'rvals': ['','','','','','','','',''], 'pvals': ['','','','','','','','','']}
+        fdata[f] = {'ligand': '', 'size': '', 'charge': '', 'reactant': '', 'product': '', 'dGa': '', 'dGr': '', 'tsvals': ['','','','','','','','',''], 'rvals': ['','','','','','','','',''], 'pvals': ['','','','','','','','','']}
         # get ligand, size, charge for every frame even if not done
         templatepdb = glob.glob(f'{f}/model_*_template.pdb')[0]
         with open(templatepdb,'r') as fp:
-            lig = [line.strip().split() for line in fp.readlines() if 'COR' in line][0]
+            lines = fp.readlines()
+            lig = [line.strip().split() for line in lines if 'COR' in line][0]
             fdata[f]['ligand'] = lig[4]+':'+lig[5]
             ligid = lig[5]
             lig = lig[4]+lig[5]
-            fdata[f]['size'] = str(len(fp.readlines()))
+            #fdata[f]['size'] = str(len(fp.readlines()))
+            fdata[f]['size'] = lines[-1].split()[1]
         with open(f'{f}/orca.inp','r') as fp:
             xyzline = [line.strip().split() for line in fp.readlines() if '*xyz' in line][0]
             fdata[f]['charge'] = xyzline[1]

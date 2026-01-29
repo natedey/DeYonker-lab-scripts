@@ -40,7 +40,8 @@ def makeguesspdb(modelpdb,newpdb,lig):
 
 ##########
 # align optimized ts with ligand in optimized model
-# replace whole ligand with aligned ts geom by ID instead of atom list
+# used to replace whole ligand with aligned ts geom by ID instead of atom list (commented out code above)
+# but as of jan 2026 it's by coords to make sure that original ligand name and ch/id are preserved, not using ones from old ts
 ##########
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Create tsguess.pdb for chorismate mutase models. Aligns old TS geom to model PDB ligand and then replaces it.")

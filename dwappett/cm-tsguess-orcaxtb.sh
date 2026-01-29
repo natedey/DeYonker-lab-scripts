@@ -17,4 +17,4 @@ bond2a=$(( $(awk '$4 == "COR" && $3 == "C5" {print $2}' tsguess.pdb) - 1 ))
 bond2b=$(( $(awk '$4 == "COR" && $3 == "O7" {print $2}' tsguess.pdb) - 1 ))
 sed -i "s/constraints/constraints\n  { B $bond1a $bond1b C }\n  { B $bond2a $bond2b C }/" orca.inp
 
-cp ~/git/DeYonker-lab-scripts/dwappett/1-orcaxtb 1
+#cp ~/git/DeYonker-lab-scripts/dwappett/1-orcaxtb 1

@@ -14,9 +14,10 @@ for i in $(cat $1); do
  fi
  propagate_orca.sh freqcrash
  if [ -f orca.xyz ] && (( $(( $(head -1 orca.xyz) + 2 )) == $(cat orca.xyz | wc -l) )); then
-  if (( $(ls *freqcrash-inp 2>/dev/null) )) && cmp -s $(ls *-freqcrash-inp | tail -1) orca.inp; then
+  if (( $(ls *freqcrash-inp 2>/dev/null) )) && ( cmp -s $(ls *-freqcrash-inp | tail -1) orca.inp || cmp -si 5:1 $(ls *-freqcrash-inp | tail -1) orca.inp ); then
    replace_orca_inp_geom.py
    sed -i "s/opt //" orca.inp
+   sed -i "/Calc_Hess/d; /Recalc_Hess/d" orca.inp
    if [[ "$joblist" == "none" ]]; then
     joblist=$((10#${i#f}))
    else

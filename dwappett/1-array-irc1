@@ -1,0 +1,69 @@
+#!/bin/bash
+#SBATCH --ntasks=4
+#SBATCH --cpus-per-task=1
+#SBATCH --nodes=1
+#SBATCH --partition=acomputeq
+#SBATCH --time=24:00:00
+#SBATCH --job-name=ORCAJOB
+#SBATCH --output=f%5a/tsopt/irc1/slurm-%j.out
+#SBATCH --error=f%5a/tsopt/irc1/slurm-%j.err
+#SBATCH --mem=8GB
+#SBATCH --array=ASTART-AEND%4
+
+##### Specify name for input and output files #####
+name=orca
+
+#export orcadir=/home/ndyonker/src/orca_6_0_0
+#echo $orcadir
+#export PATH=$orcadir:$PATH
+module load orca/6.1.1 
+export orcadir=/opt/ohpc/pub/apps/uofm/orca/6.1.1
+echo $orcadir
+export PATH=$orcadir:$PATH
+
+##### Go to submission directory #####
+cd $SLURM_SUBMIT_DIR
+CALCDIR=$SLURM_SUBMIT_DIR/f$(printf %05d ${SLURM_ARRAY_TASK_ID})/tsopt/irc1
+
+##### Module load #####
+module load openmpi/4.1.8/gcc.8.5.0/noncuda
+
+# Define the variable RSH_COMMAND for communication 
+# between nodes for starting independent calculations 
+export RSH_COMMAND="/usr/bin/ssh -x"
+
+##### What is my job ID? ##### 
+echo "$SLURM_JOB_ID"
+
+##### Information on list of nodes, n° of nodes, n° of threads, n° of tasks #####
+echo "$SLURM_JOB_NODELIST"
+echo "$SLURM_NNODES"
+echo "$SLURM_NTASKS_PER_NODE"
+echo "$SLURM_NTASKS"
+
+
+##### CLEAN UP ANYTHING LEFT IN SCRATCH FROM PREVIOUS JOBS FOR THIS SYSTEM #####
+for s in $(ls $CALCDIR/slurm-*.out | awk -F/ '{print $NF}' | sed "s/slurm-//; s/.out//"); do
+ if [ -d /scratch/$USER/$s ]; then echo "removing previous calc directory $s from scratch"; rm -r /scratch/$USER/$s; fi
+done
+
+##### TMP scratch directory #####
+export SCRATCHDIR=/scratch/$USER/$SLURM_JOB_ID/
+mkdir $SCRATCHDIR
+export TMPDIR=/scratch/$USER/$SLURM_JOB_ID/
+
+cp $CALCDIR/$name.inp $SCRATCHDIR/
+cp $CALCDIR/$name.hess $SCRATCHDIR/
+#cp  $SLURM_SUBMIT_DIR/*.xyz $SCRATCHDIR/
+
+cd $SCRATCHDIR
+
+### Executable: Input-Ouput #####
+$orcadir/orca $name.inp '--bind-to core:overload-allowed --use-hwthread-cpus' > $CALCDIR/$name.out
+#orca $name.inp > $SLURM_SUBMIT_DIR/$name.out
+
+rm -rf *.tmp*
+cp $SCRATCHDIR/* $CALCDIR/
+cd $SLURM_SUBMIT_DIR
+rm -rf $SCRATCHDIR
+

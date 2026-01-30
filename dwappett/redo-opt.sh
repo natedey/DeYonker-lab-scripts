@@ -38,7 +38,7 @@ for i in $(cat $1); do
   #fi
   if ! grep -q "Calc_Hess" orca.inp; then
    sed -i "s/%geom/%geom\n  Calc_Hess true\n  Recalc_Hess 200/" orca.inp
-  elif grep -q "Calc_Hess" && ! grep -q "Recalc_Hess"; then
+  elif grep -q "Calc_Hess" orca.inp && ! grep -q "Recalc_Hess" orca.inp; then
    sed -i "s/Calc_Hess true/Calc_Hess true\n  Recalc_Hess 200/" orca.inp
   else
    sed -i "s/Recalc_Hess 200/Recalc_Hess 100/" orca.inp

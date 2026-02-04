@@ -9,15 +9,17 @@ for i in $(cat $1); do
   d=$(echo $i | awk -F/ '{print $1}')
   echo $d
   cd $d
-  mkdir tsopt
-  cp tsconstrained/orca.hess tsopt/tsconstrained.hess
-  cd tsopt
-  replace_orca_inp_geom.py -inp ../tsconstrained/orca.inp -xyz ../tsconstrained/orca.xyz -tsopt -inhess tsconstrained.hess
-  sed -i "/Calc_Hess/d; /Recalc_Hess/d" orca.inp
-  if [[ "$joblist" == "none" ]]; then
-    joblist=$((10#${d#f}))
-  else
-    joblist=$joblist","$((10#${d#f}))
+  if [ ! -d "tsopt" ]; then
+    mkdir tsopt
+    cp tsconstrained/orca.hess tsopt/tsconstrained.hess
+    cd tsopt
+    replace_orca_inp_geom.py -inp ../tsconstrained/orca.inp -xyz ../tsconstrained/orca.xyz -tsopt -inhess tsconstrained.hess
+    sed -i "/Calc_Hess/d; /Recalc_Hess/d" orca.inp
+    if [[ "$joblist" == "none" ]]; then
+      joblist=$((10#${d#f}))
+    else
+      joblist=$joblist","$((10#${d#f}))
+    fi
   fi
   cd $wkdr
 done

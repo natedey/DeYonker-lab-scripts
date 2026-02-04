@@ -8,12 +8,13 @@ joblist="none"
 for i in $(cat $1); do
   d=$(echo $i | awk -F/ '{print $1}')
   cd $d/tsopt
-  pwd
-  python ~/git/DeYonker-lab-scripts/gen_irc_orca.py
-  if [[ "$joblist" == "none" ]]; then
-    joblist=$((10#${d#f}))
-  else
-    joblist=$joblist","$((10#${d#f}))
+  if [ ! -d "irc1" ] && [ ! -d "irc2" ]; then
+    python ~/git/DeYonker-lab-scripts/gen_irc_orca.py
+    if [[ "$joblist" == "none" ]]; then
+      joblist=$((10#${d#f}))
+    else
+      joblist=$joblist","$((10#${d#f}))
+    fi
   fi
   cd $wkdr
 done

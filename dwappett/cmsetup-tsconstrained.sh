@@ -2,19 +2,22 @@
 # script to set up ts guesses/constrained opts for CM MD->QM project
 # created DAW Jan 2026
 # usage: cmsetup-tsconstrained.sh [list file]
+# only sets up dirs/jobs if tsconstrained dir doesn't exist yet so stuff isn't overwritten
 
 wkdr=$(pwd)
 joblist="none"
 for i in $(cat $1); do
   cd $i
-  xyz_to_pdb.py -pdb model_*_template.pdb -name ${i}-opt
-  mkdir tsconstrained
-  cd tsconstrained
-  cm-tsguess-orcaxtb.sh ../${i}-opt.pdb
-  if [[ "$joblist" == "none" ]]; then
-    joblist=$((10#${i#f}))
-  else
-    joblist=$joblist","$((10#${i#f}))
+  if [ ! -d "tsconstrained" ]; then
+    xyz_to_pdb.py -pdb model_*_template.pdb -name ${i}-opt
+    mkdir tsconstrained
+    cd tsconstrained
+    cm-tsguess-orcaxtb.sh ../${i}-opt.pdb
+    if [[ "$joblist" == "none" ]]; then
+      joblist=$((10#${i#f}))
+    else
+      joblist=$joblist","$((10#${i#f}))
+    fi
   fi
   cd $wkdr
 done

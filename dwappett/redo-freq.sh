@@ -3,10 +3,22 @@
 # redo-freq.sh arg1
 # arg1 is file listing dirs to do this for
 
+if [[ "$1" == "-h" ]] || [[ "$1" == *"-help" ]]; then
+  echo "redo-freq.sh arg1
+arg1: file listing directories to do this in
+script retrieves optimised geometry and sets up freq only calc on that structure
+also prepares slurm array file to run jobs in listed directories
+"
+  exit
+fi
+
+calctype=$(echo ${1//.txt} | awk -F_ '{print $2}' )
+redotype="freqcrash"
+wkdr=$(pwd)
 joblist="none"
 for i in $(cat $1); do
  cd $i
- #orca-extract-final-geom.sh orca.out 
+ echo $i
  slurmjob=$(ls slurm-*.err | tail -1 | sed "s/slurm-//; s/.err//")
  if [ -d /scratch/$USER/$slurmjob ] && cmp -s /scratch/$USER/$slurmjob/orca.inp orca.inp; then
   cp /scratch/$USER/$slurmjob/orca.xyz .
@@ -18,19 +30,33 @@ for i in $(cat $1); do
    replace_orca_inp_geom.py
    sed -i "s/opt //" orca.inp
    sed -i "/Calc_Hess/d; /Recalc_Hess/d" orca.inp
+   d=$(echo $i | awk -F/ '{print $1}')
    if [[ "$joblist" == "none" ]]; then
-    joblist=$((10#${i#f}))
+    joblist=$((10#${d#f}))
    else
-    joblist=$joblist","$((10#${i#f}))
+    joblist=$joblist","$((10#${d#f}))
    fi
-  else echo "error propagating orca.inp for $i, not overwriting" >> freq-restart-issues.txt
+  else echo "error propagating orca.inp for $i, not overwriting" >> $wkdr/freq-restart-issues.txt
   fi
- else echo "error retrieving optimized coordinates for $i" >> freq-restart-issues.txt
+ else echo "error retrieving optimized coordinates for $i" >> $wkdr/freq-restart-issues.txt
  fi
- cd -
+ cd $wkdr
 done
 
-cp ~/git/DeYonker-lab-scripts/dwappett/1-array 1-array-redo-freqcrash
-sed -i "s/ASTART-AEND\%4/${joblist}%1/" 1-array-redo-freqcrash
+#cp ~/git/DeYonker-lab-scripts/dwappett/1-array 1-array-redo-freqcrash
+#sed -i "s/ASTART-AEND\%4/${joblist}%1/" 1-array-redo-freqcrash
 
+if [[ "$calctype" == "initialopt" ]]; then
+  cp ~/git/DeYonker-lab-scripts/dwappett/1-array 1-array-redo-initialopt-$redotype
+  jobfile="1-array-redo-initialopt-$redotype"
+elif [[ "$calctype" == "irc2" ]]; then
+  cp ~/git/DeYonker-lab-scripts/dwappett/1-array-irc1 1-array-redo-irc2-$redotype
+  sed -i "s/irc1/irc2/" 1-array-redo-irc2-$redotype
+  jobfile="1-array-redo-irc2-$redotype"
+else
+  cp ~/git/DeYonker-lab-scripts/dwappett/1-array-$calctype 1-array-redo-$calctype-$redotype
+  jobfile="1-array-redo-$calctype-$redotype"
+fi
+
+sed -i "s/ASTART-AEND\%4/${joblist}%1/" $jobfile
 

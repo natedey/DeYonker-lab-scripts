@@ -4,9 +4,9 @@
 # check-opt-orca.sh (arg1) where the valid arg1 is filename or --help
 #
 
-if [ "$1" = "--help" ]; then
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
 echo "This checks for the lowest energy and best convergence criteria of an opt
-check-opt-orca.sh arg1 (which is \$1)
+check-opt-orca.sh arg1
 arg1 is the name of an output file, default is orca.out
 "
 exit

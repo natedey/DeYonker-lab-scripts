@@ -22,8 +22,9 @@ Help()
   echo "n:  break up into sections of n pdbs"
   echo "r:  rinrus driver input template (if not rinrus.inp)"
   echo "b:  use batch res atoms files instead (just changes expected file name, you need to copy over correct batch res_atoms files)"
-  echo "j:  input file format for making job submission script (g16/gauxtb/orca6)"
-  echo "h:  Print this information"
+  echo "j:  input file format for making job submission script (g16/gauxtb/orca6/orcaxtb/array)"
+  echo "h:  print this information"
+  echo "for more information, read corresponding md-to-qm-instructions.txt file"
 }
 
 # set defaults: put into subsets of max 100 frames, use individual res_atoms files, rinrus driver input template is rinrus.inp
@@ -134,6 +135,10 @@ for i in $(ls *.pdb); do
   if [ $ct -eq $n ]; then
     mv tempdir f${startnum}-f$fnum
     sed -i "s/tempdir/f${startnum}-f$fnum/" workdirs.txt
+    if [[ "$job" == "array" ]]; then
+      cp ~/git/DeYonker-lab-scripts/dwappett/1-array f${startnum}-f$fnum/1-array
+      sed -i "s/ASTART-AEND\%4/$((10#$startnum))-$((10#$fnum))%1/" f${startnum}-f$fnum/1-array
+    fi
     ct=1
     startnum=x
   else
@@ -145,5 +150,9 @@ done
 if [ -d "tempdir" ]; then
   mv tempdir f${startnum}-f$fnum
   sed -i "s/tempdir/f${startnum}-f$fnum/" workdirs.txt
+  if [[ "$job" == "array" ]]; then
+    cp ~/git/DeYonker-lab-scripts/dwappett/1-array f${startnum}-f$fnum/1-array
+    sed -i "s/ASTART-AEND\%4/$((10#$startnum))-$((10#$fnum))%1/" f${startnum}-f$fnum/1-array
+  fi
 fi
 

@@ -21,6 +21,9 @@ import argparse
 import subprocess
 from subprocess import Popen, PIPE,STDOUT
 from pymol import cmd
+import pandas as pd
+import matplotlib
+import matplotlib.pyplot as plt
 
 
 # results processing function
@@ -123,6 +126,15 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
     if errorlog:
         with open(f'{dirlabel}_collection_errors.txt') as fp:
             fp.write('\n'.join(errorlog))
+
+    ### make quick plot ###
+    df = pd.read_csv(f'{dirlabel}_results.csv',index_col='frame')
+    df.insert(loc=0, column='fnum', value=[int(i.replace('f','')) for i in df.index.values])
+    fig, axs = plt.subplots(nrows=2,ncols=1,figsize=(10,6),layout='constrained')
+    df.plot(x='fnum',y='dGa',kind='scatter',ax=axs[0],ylabel=r'$\Delta G ^\ddagger$ (kcal/mol)',marker='o',color='b',xlabel='')
+    df.plot(x='fnum',y='dGr',kind='scatter',ax=axs[1],ylabel=r'$\Delta G _{rxn}$ (kcal/mol)',marker='^',color='r',xlabel='model/frame number')
+    fig.align_labels()
+    plt.savefig(f'{dirlabel}_free_energies.png')
 
     return fdata
 

@@ -18,16 +18,19 @@ checkdirstate () {
     if grep -q "ORCA TERMINATED NORMALLY" <<< $keywords; then
      if grep -q "THE OPTIMIZATION HAS CONVERGED" <<< $keywords; then echo $1 >> check_${2}_done.txt
      elif grep -q "The optimization did not converge" <<< $keywords; then echo $1 >> check_${2}_maxcyc.txt
-     elif grep -q "Geometry optimization failed" <<< $keywords; then echo "$1 - geometry optimization failed" >> check_${2}_CHECK_MANUALLY.txt
+     #elif grep -q "Geometry optimization failed" <<< $keywords; then echo "$1 - geometry optimization failed" >> check_${2}_CHECK_MANUALLY.txt
+     elif grep -q "Geometry optimization failed" <<< $keywords; then echo $1 >> check_${2}_optcrash.txt
      else echo "$1 - orca.out terminated normally but neither converged nor hit max cycles nor failed" >> check_${2}_CHECK_MANUALLY.txt
      fi
     else
-     if grep -q "Numerical calculation ISN'T COMPLETE!" <<< $keywords; then echo "$1 - frequency calculation problem" >> check_${2}_CHECK_MANUALLY.txt
+     if grep -q $(ls $1/slurm*.err | tail -1 | awk -F/ '{print $NF}' | sed "s/slurm-//; s/.err//") <<< $runningjobs; then echo $1 >> check_${2}_running.txt
+     elif grep -q "Numerical calculation ISN'T COMPLETE!" <<< $keywords; then echo "$1 - frequency calculation problem, check geometry" >> check_${2}_CHECK_MANUALLY.txt
      elif grep -q "THE OPTIMIZATION HAS CONVERGED" <<< $keywords; then echo $1 >> check_${2}_freqcrash.txt
      elif grep -q "Recalc_Hess 100" <<< $keywords; then echo "$1 - opt didn't finish with Recalc_Hess 100" >> check_${2}_CHECK_MANUALLY.txt
      elif grep -q -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_" <<< $keywords; then echo $1 >> check_${2}_orcaerror.txt
      elif grep -q "CANCELLED AT .* DUE TO TIME LIMIT" $(ls $1/slurm*.err | tail -1); then echo $1 >> check_${2}_optcrash.txt
-     else echo $1 >> check_${2}_running.txt
+     #else echo $1 >> check_${2}_running.txt
+     else echo "$1 - unrecognised termination" >> check_${2}_CHECK_MANUALLY.txt
      fi
     fi
   elif grep -q "Energy+Gradient Calculation" <<< $keywords; then
@@ -35,6 +38,7 @@ checkdirstate () {
     for j in $(ls $1/*-out 2>/dev/null); do if grep -q "Geometry Optimization Run" $j; then optout=$j; fi; done
     if [[ "$optout" != "0" ]] && grep -q "THE OPTIMIZATION HAS CONVERGED" $optout; then
      if grep -q "ORCA TERMINATED NORMALLY" <<< $keywords; then echo $1 >> check_${2}_done.txt
+     elif grep -q $(ls $1/slurm*.err | tail -1 | awk -F/ '{print $NF}' | sed "s/slurm-//; s/.err//") <<< $runningjobs; then echo $1 >> check_${2}_running.txt
      elif grep -q "Numerical calculation ISN'T COMPLETE" <<< $keywords; then echo "$1 - frequency calculation problem" >> check_${2}_CHECK_MANUALLY.txt
      else echo $1 >> check_${2}_freqcrash.txt
      fi
@@ -57,7 +61,7 @@ OR: check_cm_jobs.sh dir [directory] -----> just check one directory
 OR: check_cm_jobs.sh asarray [file] -----> run as slurm array for speed
 in each directory checked, script creates lists check_[job]_[status].txt
  jobs: initialopt / tsconstrained / tsopt / irc1 / irc2
- statuses: done / maxcyc / orcaerror / optcrash / freqcrash / CHECK_MANUALLY
+ statuses: done / maxcyc / orcaerror / optcrash / freqcrash / imagmodeproblem / CHECK_MANUALLY
 "
  exit
 elif [ -z "$1" ] && [ -f "new_dirs.txt" ]; then
@@ -79,6 +83,8 @@ else
  directories=$(cat $1)
  echo "checking directories listed in file $1"
 fi
+
+runningjobs=$(squeue --me -t running -r -o "%A" -h)
 
 for i in $(echo $directories); do
  echo $i

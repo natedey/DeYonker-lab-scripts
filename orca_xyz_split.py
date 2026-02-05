@@ -23,21 +23,22 @@ def split_xyz_file(input_file,frame):
         if lengths[f] != int(struclen)+2:
             print(f'Error: structure {f} is {lengths[f]} lines long but should be {int(struclen)+2} lines long!')
             exit()
-    
+   
+    if input_file.split('/')[-1] == "orca.xyz":
+        fn = "orcaxyz"
+    elif input_file.split('/')[-1] == "orca_trj.xyz":
+        fn = "orcatrj"
+    else:
+        fn = input_file.split('/')[-1].replace('.xyz','')
+ 
     if frame == 'all':
         for f in strucs.keys():
-            if "orca_trj.xyz" in input_file:
-                output_file = f"orcatrj_{str(f).zfill(3)}.xyz"
-            else:
-                output_file = f"orcaxyz_{str(f).zfill(3)}.xyz"
+            output_file = f"{fn}_{str(f).zfill(3)}.xyz"
             with open(output_file, 'w') as out_file:
                     out_file.writelines(strucs[f])
     else:
         frame = int(frame)
-        if "orca_trj.xyz" in input_file:
-            output_file = f"orcatrj_{str(frame).zfill(3)}.xyz"
-        else:
-            output_file = f"orcaxyz_{str(frame).zfill(3)}.xyz"
+        output_file = f"{fn}_{str(frame).zfill(3)}.xyz"
         with open(output_file, 'w') as out_file:
             out_file.writelines(strucs[frame])
 

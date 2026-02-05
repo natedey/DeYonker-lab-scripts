@@ -45,20 +45,31 @@ fi
 
 cp -i $2.inp $count-$1-inp
 cp -i $2.out $count-$1-out
-if [ -f $2.xyz ]; then
-        cp -i $2.xyz $count-$1-xyz
-fi
-if [ -f $2.gbw ]; then
-	cp -i $2.gbw $count-$1-gbw
-fi
-if [ -f $2.xtbw ]; then
-        cp -i $2.xtbw $count-$1-xtbw
-fi
-if [ -f $2.hess ]; then
-	cp -i $2.hess $count-$1-hess
-fi
+
+# before propagating xyz/gbw/hess/trjxyz, check that they're new files to avoid mismatched propagation when stuff wasn't copied back from the scratch dir
+for i in xyz gbw xtbw hess; do
+ if [ -f $2.$i ]; then
+  unique=1
+  if [[ "$count" -gt 1 ]]; then
+   for ((j=1;j<$count;j++)); do
+    if [ -f $j-*-$i ] && cmp -s $j-*-$i $2.$i; then unique=0; fi
+   done
+  fi
+  if [[ "$unique" == 1 ]]; then
+   cp -i $2.$i $count-$1-$i
+  fi
+ fi
+done
 if [ -f $2_trj.xyz ]; then
-        cp -i $2_trj.xyz $count-$1-trjxyz
+ unique=1
+ if [[ "$count" -gt 1 ]]; then
+  for ((j=1;j<$count;j++)); do
+   if [ -f $j-*-trjxyz ] && cmp -s $j-*-trjxyz $2_trj.xyz; then unique=0; fi
+  done
+ fi
+ if [[ "$unique" == 1 ]]; then
+  cp -i $2_trj.xyz $count-$1-trjxyz
+ fi
 fi
 
 ls

@@ -64,9 +64,8 @@ if __name__ == '__main__':
         inplines = [l for l in inplines if "{ B" not in l]
         geomstart = [i for i,s in enumerate(inplines) if '%geom' in s][0]
         inplines = inplines[0:geomstart+1] + ['  inhess read\n',f'  inhessname "{args.inhess}"\n'] + inplines[geomstart+1:] 
-        label = "# geom from constrained opt\n"
-    else:
-        label = f"# geom from {args.xyz}"
+    
+    label = f"# geom from {args.xyz}"
 
     # do coord replacement stuff
     newinp = replace_inp_xyz(inplines,coords,label)

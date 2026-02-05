@@ -127,16 +127,24 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
         with open(f'{dirlabel}_collection_errors.txt') as fp:
             fp.write('\n'.join(errorlog))
 
-    ### make quick plot ###
+    return fdata
+
+
+### make quick plot ###
+def plotcollectedresults(dirlabel):
     df = pd.read_csv(f'{dirlabel}_results.csv',index_col='frame')
     df.insert(loc=0, column='fnum', value=[int(i.replace('f','')) for i in df.index.values])
     fig, axs = plt.subplots(nrows=2,ncols=1,figsize=(10,6),layout='constrained')
-    df.plot(x='fnum',y='dGa',kind='scatter',ax=axs[0],ylabel=r'$\Delta G ^\ddagger$ (kcal/mol)',marker='o',color='b',xlabel='')
-    df.plot(x='fnum',y='dGr',kind='scatter',ax=axs[1],ylabel=r'$\Delta G _{rxn}$ (kcal/mol)',marker='^',color='r',xlabel='model/frame number')
+    line1 = axs[0].hlines(df['dGa'].mean(),df['fnum'].min()-1,df['fnum'].max()+1,colors='k',linestyles='dashed',label=r"mean $\Delta G ^\ddagger$"+f" = {df['dGa'].mean().round(2)} kcal/mol")
+    line2 = axs[1].hlines(df['dGr'].mean(),df['fnum'].min()-1,df['fnum'].max()+1,colors='k',linestyles='dashed',label=r"mean $\Delta G _{rxn}$"+f" = {df['dGr'].mean().round(2)} kcal/mol")
+    df.plot(x='fnum',y='dGa',kind='scatter',ax=axs[0],ylabel=r'$\Delta G ^\ddagger$ (kcal/mol)',marker='o',color='b',xlabel='',xlim=(df['fnum'].min()-1,df['fnum'].max()+1))
+    df.plot(x='fnum',y='dGr',kind='scatter',ax=axs[1],ylabel=r'$\Delta G _{rxn}$ (kcal/mol)',marker='^',color='r',xlabel='model/frame number',xlim=(df['fnum'].min()-1,df['fnum'].max()+1))
+    axs[0].legend(handles=[line1],loc='best')
+    axs[1].legend(handles=[line2],loc='best')
     fig.align_labels()
     plt.savefig(f'{dirlabel}_free_energies.png')
 
-    return fdata
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="collect ts/irc1/irc2 energies and calculate free energies of activation/reaction and convert optimized strucs to pdb format for big CM MD->QM project")
@@ -157,4 +165,5 @@ if __name__ == '__main__':
     else:
         modeltype = ''
 
-    fdata = process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,modeltype)
+    #fdata = process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,modeltype)
+    plotcollectedresults(dirlabel)    

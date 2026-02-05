@@ -26,6 +26,7 @@ wkdr=$(pwd)
 joblist="none"
 
 for i in $(awk '{print $1}' $1); do
+ echo $i
  cd $i
  if [[ "$redotype" == "optcrash" ]] || [[ "$redotype" == "maxcyc" ]]; then
   propagate_orca.sh $redotype
@@ -44,10 +45,17 @@ for i in $(awk '{print $1}' $1); do
      sed -i "s/Recalc_Hess 200/Recalc_Hess 100/" orca.inp
     fi
   fi
- elif [[ "$redotype" == "imagmodeproblem" ]]; then
+ elif [[ "$redotype" == "extraimagmodes" ]]; then
   propagate_orca.sh $redotype
   replace_orca_inp_geom.py
   sed -i "s/ALPB(water)/ALPB(water) tightopt/" orca.inp
+ elif [[ "$redotype" == "tsmodegone" ]] && ! grep -q "modify_internal" orca.inp; then
+  propagate_orca.sh $redotype
+  bonds=$(grep " { B " ../tsconstrained/orca.inp | sed "s/ C }/ A }/")
+  sed -i "s/%geom/%geom\n  modify_internal\n${bonds//$'\n'/\\n}\n  end/" orca.inp
+ elif [[ "$redotype" == "tsmodegone" ]] && grep -q "modify_internal" orca.inp; then
+  echo "$i already has modify_internal added. skipping..."
+  continue
  fi 
  d=$(echo $i | awk -F/ '{print $1}')
  if [[ "$joblist" == "none" ]]; then

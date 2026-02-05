@@ -18,8 +18,13 @@ from numpy import *
 def write_irc_inputs(inp_f,dir1,dir2,irc1,irc2,scale):
     with open(inp_f) as f:
         inplines = f.readlines()
-    inplines[0] = inplines[0].replace('optts','opt').replace('moread','')
-    inplines = [l for l in inplines if 'inhess' not in l.lower() and not l.startswith('# ')]
+    inplines[0] = inplines[0].replace('optts','opt').replace('moread','').replace('tightopt','')
+    inplines = [l for l in inplines if 'inhess' not in l.lower() and not l.startswith('# ') and 'calc_hess' not in l.lower()]
+    # remove modify internal stuff
+    if [l for l in inplines if 'modify_internal' in l]:
+        mi_start = [i for i,s in enumerate(inplines) if 'modify_internal' in s][0]
+        mi_end = [i for i,s in enumerate(inplines) if 'end' in s and i > mi_start][0]
+        inplines = inplines[0:mi_start]+inplines[mi_end+1:]
     label1 = "# the positive pertubation structure with scale +%.2f\n"%scale
     label2 = "# the negative pertubation structure with scale -%.2f\n"%scale
     newinp1 = replace_inp_xyz(inplines,irc1,label1)

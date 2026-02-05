@@ -64,12 +64,14 @@ in each directory checked, script creates lists check_[job]_[status].txt
  statuses: done / maxcyc / orcaerror / optcrash / freqcrash / imagmodeproblem / CHECK_MANUALLY
 "
  exit
-elif [ -z "$1" ] && [ -f "new_dirs.txt" ]; then
- directories=$(cat new_dirs.txt)
- echo "checking from file new_dirs.txt by default"
+#elif [ -z "$1" ] && [ -f "new_dirs.txt" ]; then
+# directories=$(cat new_dirs.txt)
+# echo "checking from file new_dirs.txt by default"
 elif [ -z "$1" ]; then
- echo "no arguments and no new_dirs.txt file to read as default!"
- exit
+# echo "no arguments and no new_dirs.txt file to read as default!"
+# exit
+ directories="."
+ echo "no argument given so checking current directory"
 elif [[ "$1" == "dir" ]]; then
  directories=$2
  echo "checking directory $2"
@@ -105,8 +107,20 @@ for i in $(echo $directories); do
    nmode=$(tac $j/orca.out | grep -m 1 -B 30 "VIBRATIONAL FREQUENCIES" | grep "imaginary mode" | wc -l)
    #firstmode=$(grep -A 12 "VIBRATIONAL FREQUENCIES" $j/orca.out | grep " 6: " | awk '{print $2}')
    firstmode=$(tac $j/orca.out | grep -m 1 -B 12 "VIBRATIONAL FREQUENCIES" | grep " 6: " | awk '{print $2}')
-   if [[ "$nmode" != 1 ]] || (( $(echo "$firstmode > -100" | bc -l) )); then
-    echo "$j - $nmode imaginary modes, first mode is $firstmode" >> check_tsopt_imagmodeproblem.txt
+   if grep -q "tightopt" $j/orca.inp; then tightopt=1; else tightopt=0; fi
+   if (( $(echo "$firstmode > -100" | bc -l) )); then
+    if grep -q "modify_internal" $j/orca.inp; then
+     echo "$j - $nmode imaginary modes, first mode is $firstmode" >> check_tsopt_tsmodegone.txt
+    else
+     echo "$j - $nmode imaginary modes, first mode is $firstmode, but modify_internal not added yet!" >> check_tsopt_tsmodegone.txt
+    fi
+    sed -i "\#$j#d" check_tsopt_done.txt
+   elif [[ "$nmode" != 1 ]]; then
+    if [[ "$tightopt" == 1 ]]; then
+     echo "$j - $nmode imaginary modes, first mode is $firstmode, tightopt already on" >> check_tsopt_CHECK_MANUALLY.txt
+    else
+     echo "$j - $nmode imaginary modes, first mode is $firstmode" >> check_tsopt_extraimagmodes.txt
+    fi
     sed -i "\#$j#d" check_tsopt_done.txt
    fi
   done
@@ -116,8 +130,13 @@ for i in $(echo $directories); do
   if [ -f check_${k}_done.txt ]; then
    for j in $(cat check_${k}_done.txt); do
     nmode=$(tac $j/orca.out | grep -m 1 -B 30 "VIBRATIONAL FREQUENCIES" | grep "imaginary mode" | wc -l)
+    if grep -q "tightopt" $j/orca.inp; then tightopt=1; else tightopt=0; fi
     if [[ "$nmode" != 0 ]]; then
-     echo "$j - $nmode imaginary modes" >> check_${k}_imagmodeproblem.txt
+     if [[ "$tightopt" == 1 ]]; then
+      echo "$j - $nmode imaginary modes, tightopt already on" >> check_${k}_CHECK_MANUALLY.txt
+     else
+      echo "$j - $nmode imaginary modes" >> check_${k}_extraimagmodes.txt
+     fi
      sed -i "\#$j#d" check_${k}_done.txt
     fi
    done

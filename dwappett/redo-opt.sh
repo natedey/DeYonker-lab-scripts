@@ -36,6 +36,10 @@ for i in $(awk '{print $1}' $1); do
     else
      sed -i "s/  constraints/  Recalc_Hess 200\n  constraints/" orca.inp
     fi
+    if ! grep -q "modify_internal" orca.inp; then
+      bonds=$(grep " { B " ../tsconstrained/orca.inp | sed "s/ C }/ A }/")
+      sed -i "s/%geom/%geom\n  modify_internal\n${bonds//$'\n'/\\n}\n  end/" orca.inp
+    fi
   else
     if ! grep -q "Calc_Hess" orca.inp; then
      sed -i "s/%geom/%geom\n  Calc_Hess true\n  Recalc_Hess 200/" orca.inp

@@ -86,6 +86,8 @@ else
  echo "checking directories listed in file $1"
 fi
 
+
+
 runningjobs=$(squeue --me -t running -r -o "%A" -h)
 
 for i in $(echo $directories); do
@@ -93,12 +95,24 @@ for i in $(echo $directories); do
  cd $i
  rm check-new-jobs_done.txt check-new-jobs_maxcyc.txt check-new-jobs_freqcrash.txt check-new-jobs_optcrash.txt check-new-jobs_orcaerror.txt check-new-jobs_CHECK_MANUALLY.txt 1-array* 2> /dev/null
  rm check_initialopt_*.txt check_tsconstrained_*.txt check_tsopt_*.txt check_irc*.txt 2> /dev/null
+ rm check_pending.txt 2> /dev/null
  for d in f*; do
   checkdirstate $d initialopt
   if [ -d $d/tsconstrained ] && [ -f $d/tsconstrained/orca.out ]; then checkdirstate $d/tsconstrained tsconstrained; else continue; fi
   if [ -d $d/tsopt ] && [ -f $d/tsopt/orca.out ]; then checkdirstate $d/tsopt tsopt; else continue; fi
   if [ -d $d/tsopt/irc1 ] && [ -f $d/tsopt/irc1/orca.out ]; then checkdirstate $d/tsopt/irc1 irc1; fi
   if [ -d $d/tsopt/irc2 ] && [ -f $d/tsopt/irc2/orca.out ]; then checkdirstate $d/tsopt/irc2 irc2; fi
+ done
+ # filter out pending jobs
+ for j in $(squeue --me -t pending -r -o "%K %Z" -h | grep $(pwd)$ | awk '{ printf("f%05d\n",$1) }'); do
+  if [[ ! $(grep -H $j check_*.txt | grep -v -e "done" -e "running") ]]; then
+   echo "dir $j has pending job(s), seems to be a new job not a restart" >> check_pending.txt
+  else
+   for k in $(grep -H $j check_*.txt | grep -v -e "done" -e "running" -e "CHECK_MANUALLY" | awk -F: '{print $1}'); do 
+    echo "dir $j has pending job(s), removing from restart list $k to avoid possible duplication" >> check_pending.txt
+    sed -i "\#$j#d" $k
+   done
+  fi
  done
  # check tsopt done list and filter out any with extra imaginary frequencies
  if [ -f check_tsopt_done.txt ]; then

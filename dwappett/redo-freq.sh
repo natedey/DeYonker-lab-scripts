@@ -58,5 +58,6 @@ else
   jobfile="1-array-redo-$calctype-$redotype"
 fi
 
-sed -i "s/ASTART-AEND\%4/${joblist}%1/" $jobfile
-
+sed -i "s/ASTART-AEND\%4/${joblist}%2/" $jobfile
+echo ""
+echo "created $jobfile"

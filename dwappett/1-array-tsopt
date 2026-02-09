@@ -55,6 +55,7 @@ export TMPDIR=/scratch/$USER/$SLURM_JOB_ID/
 cp $CALCDIR/$name.inp $SCRATCHDIR/
 cp $CALCDIR/$name.hess $SCRATCHDIR/
 cp $CALCDIR/tsconstrained.hess $SCRATCHDIR/
+cp $CALCDIR/*-extraimagmodes-hess $SCRATCHDIR/
 #cp  $SLURM_SUBMIT_DIR/*.xyz $SCRATCHDIR/
 
 cd $SCRATCHDIR

@@ -51,14 +51,31 @@ for i in $(awk '{print $1}' $1); do
   fi
  elif [[ "$redotype" == "extraimagmodes" ]]; then
   propagate_orca.sh $redotype
-  replace_orca_inp_geom.py
+  if ! grep -q -e " opt " -e " optts "; then
+   sed -i "s/numfreq/opt numfreq/" orca.inp
+  else 
+   savedxyz=$(ls *-$redotype-xyz | tail -1)
+   replace_orca_inp_geom.py -xyz $savedxyz
+  fi
+  savedhess=$(ls *-$redotype-hess | tail -1)
   sed -i "s/ALPB(water)/ALPB(water) tightopt/" orca.inp
+  if [[ "$calctype" == "tsopt" ]]; then
+   sed -i "s/ opt / optts /" orca.inp #wont do anything if already optts but fixes if last job was only freq and the sed command earlier has just added in opt
+   sed -i "s/tsconstrained.hess/$savedhess/" orca.inp
+   if ! grep -q "modify_internal" orca.inp; then
+    bonds=$(grep " { B " ../tsconstrained/orca.inp | sed "s/ C }/ A }/")
+    sed -i "s/%geom/%geom\n  modify_internal\n${bonds//$'\n'/\\n}\n  end/" orca.inp
+   fi
+  elif ! grep -q "inhessname" orca.inp; then
+   sed -i "s/%geom/%geom\n  inhess read\n  inhessname \"$savedhess\"/" orca.inp
+  fi
  elif [[ "$redotype" == "tsmodegone" ]] && ! grep -q "modify_internal" orca.inp; then
   propagate_orca.sh $redotype
   bonds=$(grep " { B " ../tsconstrained/orca.inp | sed "s/ C }/ A }/")
   sed -i "s/%geom/%geom\n  modify_internal\n${bonds//$'\n'/\\n}\n  end/" orca.inp
  elif [[ "$redotype" == "tsmodegone" ]] && grep -q "modify_internal" orca.inp; then
   echo "$i already has modify_internal added. skipping..."
+  cd $wkdr
   continue
  fi 
  d=$(echo $i | awk -F/ '{print $1}')
@@ -70,6 +87,7 @@ for i in $(awk '{print $1}' $1); do
  cd $wkdr
 done
 
+cd $wkdr
 if [[ "$calctype" == "initialopt" ]]; then
   cp ~/git/DeYonker-lab-scripts/dwappett/1-array 1-array-redo-initialopt-$redotype
   jobfile="1-array-redo-initialopt-$redotype"
@@ -81,6 +99,7 @@ else
   cp ~/git/DeYonker-lab-scripts/dwappett/1-array-$calctype 1-array-redo-$calctype-$redotype
   jobfile="1-array-redo-$calctype-$redotype"
 fi
-
-sed -i "s/ASTART-AEND\%4/${joblist}%1/" $jobfile
+sed -i "s/ASTART-AEND\%4/${joblist}%2/" $jobfile
 sed -i "s/time=24:00:00/time=48:00:00/" $jobfile
+echo ""
+echo "created $jobfile" 

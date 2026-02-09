@@ -41,6 +41,7 @@ def split_xyz_file(input_file,frame):
         output_file = f"{fn}_{str(frame).zfill(3)}.xyz"
         with open(output_file, 'w') as out_file:
             out_file.writelines(strucs[frame])
+    return strucs
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Split an XYZ file with multiple geometries into separate files or extract specific geometry.")
@@ -48,5 +49,5 @@ if __name__ == "__main__":
     parser.add_argument("-frame", default='all', help="Structure to extract (integer or 'all', default 'all')")
     args = parser.parse_args()
 
-    split_xyz_file(args.input_file,args.frame)
+    strucs = split_xyz_file(args.input_file,args.frame)
 

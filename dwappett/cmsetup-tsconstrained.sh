@@ -23,4 +23,4 @@ for i in $(cat $1); do
 done
 
 cp ~/git/DeYonker-lab-scripts/dwappett/1-array-tsconstrained 1-array-tsconstrained
-sed -i "s/ASTART-AEND\%4/${joblist}%2/" 1-array-tsconstrained
+sed -i "s/ASTART-AEND\%4/${joblist}%10/" 1-array-tsconstrained

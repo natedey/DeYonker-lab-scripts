@@ -11,6 +11,7 @@ import sys, re
 import argparse
 import subprocess
 from read_write_pdb import *
+from orca_xyz_split import split_xyz_file
 from numpy import *
 
 def replace_inp_xyz(inplines,coords,geomlabel):
@@ -43,15 +44,23 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Replace geometry in orca input file')
     parser.add_argument('-inp', default='orca.inp', help='input_name, default orca.inp')
     parser.add_argument('-xyz', default='orca.xyz', help='output_structure, default orca.xyz')
+    parser.add_argument('-xyzframe', default=None, help='frame to read from xyz file with multiple strucs')
     parser.add_argument('-tsopt', action='store_true', help='prepare full ts opt')
     parser.add_argument('-inhess', dest='inhess', default='orca.hess', help='inhess to read')
 
     args = parser.parse_args()
    
     # get new coords from xyz file 
-    xyz = open(args.xyz).readlines()
+    if args.xyzframe:
+        strucs = split_xyz_file(args.xyz,args.xyzframe)
+        xyz = strucs[int(args.xyzframe)]
+        label = f"# geom from frame {args.xyzframe} of {args.xyz}"
+    else:
+        xyz = open(args.xyz).readlines()
+        label = f"# geom from {args.xyz}"
     xyz = [c.strip().split() for c in xyz[2:]]
     coords = array(xyz)[:,1:].astype(float)
+
 
     # get input file contents
     inplines = open(args.inp).readlines()
@@ -65,7 +74,7 @@ if __name__ == '__main__':
         geomstart = [i for i,s in enumerate(inplines) if '%geom' in s][0]
         inplines = inplines[0:geomstart+1] + ['  inhess read\n',f'  inhessname "{args.inhess}"\n'] + inplines[geomstart+1:] 
     
-    label = f"# geom from {args.xyz}"
+    #label = f"# geom from {args.xyz}"
 
     # do coord replacement stuff
     newinp = replace_inp_xyz(inplines,coords,label)

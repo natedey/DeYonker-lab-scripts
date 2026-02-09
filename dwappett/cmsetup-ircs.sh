@@ -20,8 +20,8 @@ for i in $(cat $1); do
 done
 
 cp ~/git/DeYonker-lab-scripts/dwappett/1-array-irc1 1-array-irc1
-sed -i "s/ASTART-AEND\%4/${joblist}%2/" 1-array-irc1
+sed -i "s/ASTART-AEND\%4/${joblist}%10/" 1-array-irc1
 
 cp ~/git/DeYonker-lab-scripts/dwappett/1-array-irc1 1-array-irc2
-sed -i "s/ASTART-AEND\%4/${joblist}%2/; s/irc1/irc2/" 1-array-irc2
+sed -i "s/ASTART-AEND\%4/${joblist}%10/; s/irc1/irc2/" 1-array-irc2
 

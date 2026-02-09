@@ -165,5 +165,5 @@ if __name__ == '__main__':
     else:
         modeltype = ''
 
-    #fdata = process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,modeltype)
+    fdata = process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,modeltype)
     plotcollectedresults(dirlabel)    

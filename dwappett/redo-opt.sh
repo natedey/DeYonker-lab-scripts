@@ -51,7 +51,7 @@ for i in $(awk '{print $1}' $1); do
   fi
  elif [[ "$redotype" == "extraimagmodes" ]]; then
   propagate_orca.sh $redotype
-  if ! grep -q -e " opt " -e " optts "; then
+  if ! grep -q -e " opt " -e " optts " orca.inp; then
    sed -i "s/numfreq/opt numfreq/" orca.inp
   else 
    savedxyz=$(ls *-$redotype-xyz | tail -1)

@@ -5,6 +5,7 @@ script created DAW 2026-02-06 for CM MD->QM project
 """
 
 import os, os.path
+import re
 import glob
 import pandas as pd
 
@@ -48,7 +49,7 @@ for fc in checkfiles:
     status = fc.replace('.txt','').split('_',maxsplit=2)[2]
     lines = open(fc,'r').readlines()
     for line in lines:
-        line = line.strip().split('/')[0]
+        line = re.split('/| ', line.strip())[0]
         statustable[line][job] = status
 
 if usecol:

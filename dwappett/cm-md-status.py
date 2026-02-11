@@ -53,12 +53,13 @@ for fc in checkfiles:
         statustable[line][job] = status
 
 #properly check pending
-lines = open('check_pending.txt','r').readlines()
-for line in lines:
-    f = line.split()[1]
-    for i in ['initialopt','tsconstrained','tsopt','irc1','irc2']:
-        if i in line:
-            statustable[f][i] = 'queued'
+if os.path.isfile('check_pending.txt'):
+    lines = open('check_pending.txt','r').readlines()
+    for line in lines:
+        f = line.split()[1]
+        for i in ['initialopt','tsconstrained','tsopt','irc1','irc2']:
+            if i in line:
+                statustable[f][i] = 'queued'
 
 if usecol:
     statustablecol = {}

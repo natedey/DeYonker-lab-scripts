@@ -1,0 +1,25 @@
+#!/bin/bash
+# DAW script for submitting jobs to run sequentially with dependencies
+
+if [ -z $1 ]; then
+ echo "please specify dirs!"
+ exit
+elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+ echo "usage: submit-dependent.sh [dirs]
+this script submits the 1 files in the given dirs with job dependencies
+so that each one can't start until the previous one has finished
+as an alternative to setting up a slurm array with arraytaskthrottle=1"
+exit
+fi
+
+cd $1
+ID=$(sbatch --parsable 1)
+echo "directory $1: submitted job ${ID}"
+cd ..
+shift
+for i in "$@"; do
+ cd $i
+ ID=$(sbatch --parsable --dependency=afterany:${ID} 1)
+ echo "directory $i: submitted job ${ID}"
+ cd ..
+done

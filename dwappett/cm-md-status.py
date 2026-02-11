@@ -52,17 +52,33 @@ for fc in checkfiles:
         line = re.split('/| ', line.strip())[0]
         statustable[line][job] = status
 
+#properly check pending
+lines = open('check_pending.txt','r').readlines()
+for line in lines:
+    f = line.split()[1]
+    for i in ['initialopt','tsconstrained','tsopt','irc1','irc2']:
+        if i in line:
+            statustable[f][i] = 'queued'
+
 if usecol:
     statustablecol = {}
     for key1 in statustable.keys():
         statustablecol[key1] = {}
         for key2 in statustable[key1].keys():
-            if statustable[key1][key2] == 'queued' or statustable[key1][key2] == 'running':
+            if not statustable[key1][key2]:
+                statustablecol[key1][key2] = ''
+            elif statustable[key1][key2] == 'queued' or statustable[key1][key2] == 'running':
                 statustablecol[key1][key2] = colored(statustable[key1][key2],'light_blue',None)
             elif statustable[key1][key2] == 'done':
                 statustablecol[key1][key2] = 'done'
             else:
                 statustablecol[key1][key2] = colored(statustable[key1][key2],'red',None)
+        if statustablecol[key1]['initialopt'] == 'done' and statustablecol[key1]['tsconstrained'] == '':
+            statustablecol[key1]['initialopt'] = colored('done','yellow',None)
+        elif statustablecol[key1]['tsconstrained'] == 'done' and statustablecol[key1]['tsopt'] == '':
+            statustablecol[key1]['tsconstrained'] = colored('done','green',None)
+        elif statustablecol[key1]['tsopt'] == 'done' and statustablecol[key1]['irc1'] == '':
+            statustablecol[key1]['tsopt'] = colored('done','green',None)
     df = pd.DataFrame.from_dict(statustablecol,orient='index')
     df = df[['initialopt','tsconstrained','tsopt','irc1','irc2']]
     print(tabulate.tabulate(df,headers=df.columns))

@@ -90,6 +90,7 @@ done
 cd $wkdr
 if [[ "$calctype" == "initialopt" ]]; then
   cp ~/git/DeYonker-lab-scripts/dwappett/1-array 1-array-redo-initialopt-$redotype
+  sed "s/job-name=ORCAJOB/job-name=ORCA-initialopt/" 1-array-redo-initialopt-$redotype
   jobfile="1-array-redo-initialopt-$redotype"
 elif [[ "$calctype" == "irc2" ]]; then
   cp ~/git/DeYonker-lab-scripts/dwappett/1-array-irc1 1-array-redo-irc2-$redotype

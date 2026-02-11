@@ -138,6 +138,7 @@ for i in $(ls *.pdb); do
     if [[ "$job" == "array" ]]; then
       cp ~/git/DeYonker-lab-scripts/dwappett/1-array f${startnum}-f$fnum/1-array
       sed -i "s/ASTART-AEND\%4/$((10#$startnum))-$((10#$fnum))%1/" f${startnum}-f$fnum/1-array
+      sed "s/job-name=ORCAJOB/job-name=ORCA-initialopt/" f${startnum}-f$fnum/1-array
     fi
     ct=1
     startnum=x

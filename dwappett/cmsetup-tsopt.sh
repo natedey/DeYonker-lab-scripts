@@ -36,3 +36,6 @@ done
 
 cp ~/git/DeYonker-lab-scripts/dwappett/1-array-tsopt 1-array-tsopt
 sed -i "s/ASTART-AEND\%4/${joblist}%10/" 1-array-tsopt
+echo ""
+echo "created 1-array-tsopt"
+

@@ -87,7 +87,7 @@ else
 fi
 
 
-
+wkdr=$(pwd)
 runningjobs=$(squeue --me -t running -r -o "%A" -h)
 
 for i in $(echo $directories); do
@@ -97,6 +97,7 @@ for i in $(echo $directories); do
  rm check_initialopt_*.txt check_tsconstrained_*.txt check_tsopt_*.txt check_irc*.txt 2> /dev/null
  rm check_pending.txt 2> /dev/null
  for d in f*; do
+  echo -ne "checking $i/$d \r"
   checkdirstate $d initialopt
   if [ -d $d/tsconstrained ] && [ -f $d/tsconstrained/orca.out ]; then checkdirstate $d/tsconstrained tsconstrained; else continue; fi
   if [ -d $d/tsopt ] && [ -f $d/tsopt/orca.out ]; then checkdirstate $d/tsopt tsopt; else continue; fi
@@ -104,39 +105,44 @@ for i in $(echo $directories); do
   if [ -d $d/tsopt/irc2 ] && [ -f $d/tsopt/irc2/orca.out ]; then checkdirstate $d/tsopt/irc2 irc2; fi
  done
  # filter out pending jobs
- for j in $(squeue --me -t pending -r -o "%K %Z" -h | grep $(pwd)$ | awk '{ printf("f%05d\n",$1) }'); do
-  if [[ ! $(grep -H $j check_*.txt | grep -v -e "done" -e "running") ]]; then
-   echo "dir $j has pending job(s), seems to be a new job not a restart" >> check_pending.txt
+ for j in $(squeue --me -t pending -r -o "%K_%j_%Z" -h | grep $(pwd)$); do
+  jname=$(echo $j | awk -F_ '{print $2}' | sed "s/ORCA-//")
+  dname=$(echo $j | awk -F_ '{ printf("f%05d\n",$1) }')
+  if [[ ! $(grep -H $dname check_*.txt | grep -v -e "done" -e "running") ]]; then
+   echo "dir $dname has pending $jname job, seems to be a new job not a restart" >> check_pending.txt
   else
-   for k in $(grep -H $j check_*.txt | grep -v -e "done" -e "running" -e "CHECK_MANUALLY" | awk -F: '{print $1}'); do 
-    echo "dir $j has pending job(s), removing from restart list $k to avoid possible duplication" >> check_pending.txt
-    sed -i "\#$j#d" $k
+   for k in $(grep -H $dname check_*.txt | grep -v -e "done" -e "running" -e "CHECK_MANUALLY" | awk -F: '{print $1}'); do 
+    echo "dir $dname has pending $jname job, removing from restart list $k to avoid possible duplication" >> check_pending.txt
+    sed -i "\#$dname#d" $k
    done
   fi
  done
  # check tsopt done list and filter out any with extra imaginary frequencies
- if [ -f check_tsopt_done.txt ]; then
-  for j in $(cat check_tsopt_done.txt); do
-   #nmode=$(grep "imaginary mode" $j/orca.out | wc -l)
-   nmode=$(tac $j/orca.out | grep -m 1 -B 30 "VIBRATIONAL FREQUENCIES" | grep "imaginary mode" | wc -l)
-   #firstmode=$(grep -A 12 "VIBRATIONAL FREQUENCIES" $j/orca.out | grep " 6: " | awk '{print $2}')
-   firstmode=$(tac $j/orca.out | grep -m 1 -B 12 "VIBRATIONAL FREQUENCIES" | grep " 6: " | awk '{print $2}')
-   if grep -q "tightopt" $j/orca.inp; then tightopt=1; else tightopt=0; fi
-   if (( $(echo "$firstmode > -100" | bc -l) )); then
-    if grep -q "modify_internal" $j/orca.inp; then
-     echo "$j - $nmode imaginary modes, first mode is $firstmode" >> check_tsopt_tsmodegone.txt
-    else
-     echo "$j - $nmode imaginary modes, first mode is $firstmode, but modify_internal not added yet!" >> check_tsopt_tsmodegone.txt
+ if [[ $(ls check_tsopt_*.txt | grep -e "done" -e "freqcrash" -e "optcrash" -e "maxcyc" -e "orcaerror" 2> /dev/null) ]]; then
+  for f in $(ls check_tsopt_*.txt | grep -e "done" -e "freqcrash" -e "optcrash" -e "maxcyc" -e "orcaerror"); do
+   for j in $(cat $f); do
+    if grep -q "VIBRATIONAL FREQUENCIES" $j/orca.out; then
+     lastmodes=$(tac $j/orca.out | grep -m 1 -B 30 "VIBRATIONAL FREQUENCIES")
+     nmode=$(grep "imaginary mode" <<< $lastmodes | wc -l)
+     firstmode=$(grep " 6: " <<< $lastmodes | awk '{print $2}')
+     if grep -q "tightopt" $j/orca.inp; then tightopt=1; else tightopt=0; fi
+     if (( $(echo "$firstmode > -100" | bc -l) )); then
+      if grep -q "modify_internal" $j/orca.inp; then
+       echo "$j - $nmode imaginary modes, first mode is $firstmode" >> check_tsopt_tsmodegone.txt
+      else
+       echo "$j - $nmode imaginary modes, first mode is $firstmode, but modify_internal not added yet!" >> check_tsopt_tsmodegone.txt
+      fi
+      sed -i "\#$j#d" $f
+     elif [[ "$f" == "check_tsopt_done.txt" ]] && [[ "$nmode" != 1 ]]; then
+      if [[ "$tightopt" == 1 ]]; then
+       echo "$j - $nmode imaginary modes, first mode is $firstmode, tightopt already on" >> check_tsopt_CHECK_MANUALLY.txt
+      else
+       echo "$j - $nmode imaginary modes, first mode is $firstmode" >> check_tsopt_extraimagmodes.txt
+      fi
+      sed -i "\#$j#d" $f
+     fi
     fi
-    sed -i "\#$j#d" check_tsopt_done.txt
-   elif [[ "$nmode" != 1 ]]; then
-    if [[ "$tightopt" == 1 ]]; then
-     echo "$j - $nmode imaginary modes, first mode is $firstmode, tightopt already on" >> check_tsopt_CHECK_MANUALLY.txt
-    else
-     echo "$j - $nmode imaginary modes, first mode is $firstmode" >> check_tsopt_extraimagmodes.txt
-    fi
-    sed -i "\#$j#d" check_tsopt_done.txt
-   fi
+   done
   done
  fi
  # same for ircs
@@ -156,7 +162,11 @@ for i in $(echo $directories); do
    done
   fi
  done
- cd ..
+ # finally remove any list files that are now empty after the pending stuff has been removed
+ for j in check_*.txt; do
+  if ! grep -q "f" $j; then rm $j; fi
+ done
+ cd $wkdr
 done
 
 

@@ -9,12 +9,15 @@ for i in $(cat $1); do
   d=$(echo $i | awk -F/ '{print $1}')
   cd $d/tsopt
   if [ ! -d "irc1" ] && [ ! -d "irc2" ]; then
+    echo $d
     python ~/git/DeYonker-lab-scripts/gen_irc_orca.py
     if [[ "$joblist" == "none" ]]; then
       joblist=$((10#${d#f}))
     else
       joblist=$joblist","$((10#${d#f}))
     fi
+  else
+    echo "$d - skipping because ircs already set up"
   fi
   cd $wkdr
 done
@@ -24,4 +27,7 @@ sed -i "s/ASTART-AEND\%4/${joblist}%10/" 1-array-irc1
 
 cp ~/git/DeYonker-lab-scripts/dwappett/1-array-irc1 1-array-irc2
 sed -i "s/ASTART-AEND\%4/${joblist}%10/; s/irc1/irc2/" 1-array-irc2
+
+echo ""
+echo "created 1-array-irc1 and 1-array-irc2"
 

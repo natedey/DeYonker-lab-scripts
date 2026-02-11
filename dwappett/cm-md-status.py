@@ -8,6 +8,8 @@ import os, os.path
 import re
 import glob
 import pandas as pd
+import subprocess
+from subprocess import Popen, PIPE,STDOUT
 
 #if you have the termcolor and tabulate packages installed in your conda env, table will be coloured
 try:
@@ -61,6 +63,21 @@ if os.path.isfile('check_pending.txt'):
             if i in line:
                 statustable[f][i] = 'queued'
 
+#recheck queue to label already restarted jobs if there are 1-array files
+if glob.glob('1-array*'):
+    allqueue = subprocess.run(['squeue --me -t running,pending -r -o "%K %j %T %Z" -h | grep $(pwd)$'],shell=True,stdout=PIPE,stderr=STDOUT,universal_newlines=True)
+    allqueue = [line.split() for line in allqueue.stdout.split('\n') if line]
+    for qj in allqueue:
+        qj[0] = 'f'+qj[0].zfill(5)
+        qj[1] = qj[1].replace('ORCA-','')
+        if qj[2] == 'RUNNING':
+            qj[2] = 'running'
+        else:
+            qj[2] = 'queued'
+        if statustable[qj[0]][qj[1]] != qj[2]:
+            statustable[qj[0]][qj[1]] = statustable[qj[0]][qj[1]]+'_'+qj[2]
+
+
 if usecol:
     statustablecol = {}
     for key1 in statustable.keys():
@@ -68,7 +85,8 @@ if usecol:
         for key2 in statustable[key1].keys():
             if not statustable[key1][key2]:
                 statustablecol[key1][key2] = ''
-            elif statustable[key1][key2] == 'queued' or statustable[key1][key2] == 'running':
+            #elif statustable[key1][key2] == 'queued' or statustable[key1][key2] == 'running':
+            elif 'queued' in statustable[key1][key2] or 'running' in statustable[key1][key2]:
                 statustablecol[key1][key2] = colored(statustable[key1][key2],'light_blue',None)
             elif statustable[key1][key2] == 'done':
                 statustablecol[key1][key2] = 'done'
@@ -88,3 +106,6 @@ else:
     df = df[['initialopt','tsconstrained','tsopt','irc1','irc2']]
     print(df)
 
+# get number of finished jobs
+alldone = [key for key in statustable.keys() if statustable[key] == {'initialopt': 'done', 'tsconstrained': 'done', 'tsopt': 'done', 'irc1': 'done', 'irc2': 'done'}]
+print(f'\n----- {len(alldone)} out of {len(folders)} models fully done -----')

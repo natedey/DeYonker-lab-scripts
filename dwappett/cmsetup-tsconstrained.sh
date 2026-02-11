@@ -9,6 +9,7 @@ joblist="none"
 for i in $(cat $1); do
   cd $i
   if [ ! -d "tsconstrained" ]; then
+    echo $i
     xyz_to_pdb.py -pdb model_*_template.pdb -name ${i}-opt
     mkdir tsconstrained
     cd tsconstrained
@@ -18,9 +19,14 @@ for i in $(cat $1); do
     else
       joblist=$joblist","$((10#${i#f}))
     fi
+  else
+    echo "$i - skipping because tsconstrained already set up"
   fi
   cd $wkdr
 done
 
 cp ~/git/DeYonker-lab-scripts/dwappett/1-array-tsconstrained 1-array-tsconstrained
 sed -i "s/ASTART-AEND\%4/${joblist}%10/" 1-array-tsconstrained
+
+echo ""
+echo "created 1-array-tsconstrained"

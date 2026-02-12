@@ -111,8 +111,8 @@ for i in $(echo $directories); do
   if [[ ! $(grep -H $dname check_*.txt | grep -v -e "done" -e "running") ]]; then
    echo "dir $dname has pending $jname job, seems to be a new job not a restart" >> check_pending.txt
   else
-   for k in $(grep -H $dname check_*.txt | grep -v -e "done" -e "running" -e "CHECK_MANUALLY" | awk -F: '{print $1}'); do 
-    echo "dir $dname has pending $jname job, removing from restart list $k to avoid possible duplication" >> check_pending.txt
+   for k in $(grep -H $dname check_*.txt | grep -v -e "done" -e "running" | awk -F: '{print $1}'); do 
+    echo "dir $dname has pending $jname job, removing from list $k to avoid possible duplication" >> check_pending.txt
     sed -i "\#$dname#d" $k
    done
   fi

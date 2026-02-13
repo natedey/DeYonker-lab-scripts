@@ -30,12 +30,12 @@ import matplotlib.pyplot as plt
 def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,modeltype):
     fdata = {}
     datafile = open(f'{dirlabel}_results.csv','w')
-    datafile.write('frame,ligand,size,charge,reactant,product,dGa,dGr,ts_path,ts_elE,ts_elE+ZPE,ts_thrmE,ts_H,ts_G,ts_Nbasis,ts_Nimag,ts_Gkcal,react_path,react_elE,react_elE+ZPE,react_thrmE,react_H,react_G,react_Nbasis,react_Nimag,react_Gkcal,prod_path,prod_elE,prod_elE+ZPE,prod_thrmE,prod_H,prod_G,prod_Nbasis,prod_Nimag,prod_Gkcal\n')
+    datafile.write('frame,ligand,size,charge,reactant,product,dGa,dGr,rms_ts-r_all,rms_ts-r_prot,rms_ts-r_wat,rms_p-r_all,rms_p-r_prot,rms_p-r_wat,ts_path,ts_elE,ts_elE+ZPE,ts_thrmE,ts_H,ts_G,ts_Nbasis,ts_Nimag,ts_Gkcal,react_path,react_elE,react_elE+ZPE,react_thrmE,react_H,react_G,react_Nbasis,react_Nimag,react_Gkcal,prod_path,prod_elE,prod_elE+ZPE,prod_thrmE,prod_H,prod_G,prod_Nbasis,prod_Nimag,prod_Gkcal\n')
     errorlog = []
     for f in framedirs:
         print(f)
         # placeholders for values
-        fdata[f] = {'ligand': '', 'size': '', 'charge': '', 'reactant': '', 'product': '', 'dGa': '', 'dGr': '', 'tsvals': ['','','','','','','','',''], 'rvals': ['','','','','','','','',''], 'pvals': ['','','','','','','','','']}
+        fdata[f] = {'ligand': '', 'size': '', 'charge': '', 'reactant': '', 'product': '', 'dGa': '', 'dGr': '', 'tsvals': ['','','','','','','','',''], 'rvals': ['','','','','','','','',''], 'pvals': ['','','','','','','','',''], 'rms_ts-r': ['','',''], 'rms_p-r': ['','','']}
         # get ligand, size, charge for every frame even if not done
         templatepdb = glob.glob(f'{f}/model_*_template.pdb')[0]
         with open(templatepdb,'r') as fp:
@@ -89,6 +89,16 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                     errorlog.append(f'{f} - ircs are not distinct as product and reactant, please check!')
                     continue
 
+            # collect rmsds
+            cmd.load(f'{f}-{lig}{modeltype}-ts-opt.pdb','ts')
+            cmd.load(f'{fdata[f]["reactant"]}/{f}-{lig}{modeltype}-reactant-opt.pdb','r')
+            cmd.load(f'{fdata[f]["product"]}/{f}-{lig}{modeltype}-product-opt.pdb','p')
+            for i in ['ts','p']:
+                fdata[f][f'rms_{i}-r'][0] = str(round(cmd.rms_cur(i,'r'),2))
+                fdata[f][f'rms_{i}-r'][1] = str(round(cmd.rms_cur(f'{i} and not resn COR and not resn WAT', '(r and not resn COR and not resn WAT)'),2))
+                fdata[f][f'rms_{i}-r'][2] = str(round(cmd.rms_cur(f'{i} and resn WAT', '(r and resn WAT)'),2))
+            cmd.delete('all')
+
             # collect energies
             out = subprocess.run(['extract-orca.sh'],shell=True,stdout=PIPE,stderr=STDOUT,universal_newlines=True)
             extracted = [l for l in out.stdout.split('\n') if l]
@@ -113,9 +123,11 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                 fdata[f]['dGr'] = str(Gp - Gr)
             else:
                 errorlog.append(f'{f} - extract-orca.sh output not parsed as expected, please check outputs!')
+
+            
         
-#line info will be: frame, ligand, size, charge, reactant irc, product irc, calculated dGa, calculated dGr, extract-orca outputs with G kcal/mol [9x3 = 24 cols]
-        lineinfo = [f] + [fdata[f][i] for i in ['ligand','size','charge','reactant','product','dGa','dGr']] + fdata[f]['tsvals'] + fdata[f]['rvals'] + fdata[f]['pvals']
+#line info will be: frame, ligand, size, charge, reactant irc, product irc, calculated dGa, calculated dGr, rmsds [3x2 = 6cols], extract-orca outputs with G kcal/mol [9x3 = 24 cols]
+        lineinfo = [f] + [fdata[f][i] for i in ['ligand','size','charge','reactant','product','dGa','dGr']] + fdata[f]['rms_ts-r'] + fdata[f]['rms_p-r'] + fdata[f]['tsvals'] + fdata[f]['rvals'] + fdata[f]['pvals']
         lineinfo = ','.join(lineinfo)
         
         # write csv line

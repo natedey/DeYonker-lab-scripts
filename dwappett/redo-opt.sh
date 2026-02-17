@@ -15,7 +15,7 @@ arg1: file listing directories to do this in
 script prepares slurm array file to run jobs in listed directories and determines how to restart based on filename
 for 'optcrash'/'maxcyc', sequentially adds calchess and recalchess keywords to input file to try to get the opt to converge
 'orcaerror' problems are often not orca's fault so input files are left unchanged
-'imagmodeproblem' (only use for ircs) sets up tightopt on optimised struc
+'extraimagmodes' (tsopt and ircs only) sets up tightopt on optimised struc
 "
   exit
 fi
@@ -24,6 +24,12 @@ calctype=$(echo ${1//.txt} | awk -F_ '{print $2}' )
 redotype=$(echo ${1//.txt} | awk -F_ '{print $3}' )
 wkdr=$(pwd)
 joblist="none"
+
+if [[ "$redotype" == "freqcrash" ]]; then
+  echo "this script does not restart freqcrash jobs! run the command below instead:"
+  echo "redo-freq.sh $1"
+  exit
+fi
 
 for i in $(awk '{print $1}' $1); do
  echo $i

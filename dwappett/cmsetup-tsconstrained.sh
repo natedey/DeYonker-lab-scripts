@@ -4,6 +4,24 @@
 # usage: cmsetup-tsconstrained.sh [list file]
 # only sets up dirs/jobs if tsconstrained dir doesn't exist yet so stuff isn't overwritten
 
+if [ -z "$1" ]; then
+  1="check_initialopt_done.txt"
+  echo "using default list: check_initialopt_done.txt"
+elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+  echo "usage: cmsetup-tsconstrained.sh check_initialopt_done.txt
+sets up a ts guess structure and prepares an input for the constrained opt
+script will skip fxxxxx dirs which already have a tsconstrained subdir!"
+elif [[ "$1" != "check_initialopt_done.txt" ]]; then
+  echo "this script is designed to be used with the check_initialopt_done.txt list which is not what was provided
+are you sure you want to continue with list $1? [Y/N]"
+  read altlist
+  if [[ "${altlist,,}" == "y" ]]; then
+    echo "continuing with list $1"
+  else
+    exit
+  fi
+fi
+
 wkdr=$(pwd)
 joblist="none"
 for i in $(cat $1); do

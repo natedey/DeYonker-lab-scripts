@@ -3,6 +3,24 @@
 # created DAW Jan 2026
 # usage: cmsetup-tsopt.sh [list file]
 
+if [ -z "$1" ]; then
+  1="check_tsconstrained_done.txt"
+  echo "using default list: check_tsconstrained_done.txt"
+elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+  echo "usage: cmsetup-tsopt.sh check_tsconstrained_done.txt
+uses the tsconstrained orca.xyz and orca.hess files to set up a full ts optimisation
+script will skip fxxxxx dirs which already have a tsopt subdir!"
+elif [[ "$1" != "check_tsconstrained_done.txt" ]]; then
+  echo "this script is designed to be used with the check_tsconstrained_done.txt list which is not what was provided
+are you sure you want to continue with list $1? [Y/N]"
+  read altlist
+  if [[ "${altlist,,}" == "y" ]]; then
+    echo "continuing with list $1"
+  else
+    exit
+  fi
+fi
+
 wkdr=$(pwd)
 joblist="none"
 for i in $(cat $1); do

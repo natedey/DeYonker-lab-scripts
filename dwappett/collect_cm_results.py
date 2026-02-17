@@ -18,9 +18,12 @@ fi
 import os, os.path
 import glob
 import argparse
+import time
 import subprocess
 from subprocess import Popen, PIPE,STDOUT
 from pymol import cmd
+from read_write_pdb import read_pdb
+from model_details import get_model_FGs
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
@@ -28,14 +31,23 @@ import matplotlib.pyplot as plt
 
 # results processing function
 def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,modeltype):
+    vals=['fnum','ligand', 'size', 'charge', 'done', 'reactant', 'product', 'dGa', 'dGr', 
+            'ts_mode', 'ts_C1-C9_dist', 'ts_C5-O7_dist', 'r_C1-C9_dist', 'r_C5-O7_dist', 'p_C1-C9_dist', 'p_C5-O7_dist', 'r_C1-C5-O7-C9_dihedral', 'p_C5-C1-C9-O7_dihedral',
+            'rms_tmp-init_all', 'rms_tmp-init_prot', 'rms_tmp-init_wat', 'rms_guess-ts_all', 'rms_guess-ts_prot', 'rms_guess-ts_wat',
+            'rms_ts-r_all', 'rms_ts-r_prot', 'rms_ts-r_wat', 'rms_p-r_all', 'rms_p-r_prot', 'rms_p-r_wat', 'rms_ts-p_all', 'rms_ts-p_prot', 'rms_ts-p_wat',
+            'maxmove_H_tmp-init', 'maxmove_H_guess-ts', 'maxmove_H_ts-r', 'maxmove_H_ts-p', 'maxmove_heavy_tmp-init', 'maxmove_heavy_guess-ts', 'maxmove_heavy_ts-r', 'maxmove_heavy_ts-p',
+            'ts_path', 'ts_elE', 'ts_elE+ZPE', 'ts_thrmE', 'ts_H', 'ts_G', 'ts_Nbasis', 'ts_Nimag', 'ts_Gkcal', 
+            'react_path', 'react_elE', 'react_elE+ZPE', 'react_thrmE', 'react_H', 'react_G', 'react_Nbasis', 'react_Nimag', 'react_Gkcal', 
+            'prod_path', 'prod_elE', 'prod_elE+ZPE', 'prod_thrmE', 'prod_H', 'prod_G', 'prod_Nbasis', 'prod_Nimag', 'prod_Gkcal']
+    extractvals=['path', 'elE', 'elE+ZPE', 'thrmE', 'H', 'G', 'Nbasis', 'Nimag']
     fdata = {}
-    datafile = open(f'{dirlabel}_results.csv','w')
-    datafile.write('frame,ligand,size,charge,reactant,product,dGa,dGr,rms_ts-r_all,rms_ts-r_prot,rms_ts-r_wat,rms_p-r_all,rms_p-r_prot,rms_p-r_wat,ts_path,ts_elE,ts_elE+ZPE,ts_thrmE,ts_H,ts_G,ts_Nbasis,ts_Nimag,ts_Gkcal,react_path,react_elE,react_elE+ZPE,react_thrmE,react_H,react_G,react_Nbasis,react_Nimag,react_Gkcal,prod_path,prod_elE,prod_elE+ZPE,prod_thrmE,prod_H,prod_G,prod_Nbasis,prod_Nimag,prod_Gkcal\n')
+    modelFGs = {}
     errorlog = []
     for f in framedirs:
         print(f)
         # placeholders for values
-        fdata[f] = {'ligand': '', 'size': '', 'charge': '', 'reactant': '', 'product': '', 'dGa': '', 'dGr': '', 'tsvals': ['','','','','','','','',''], 'rvals': ['','','','','','','','',''], 'pvals': ['','','','','','','','',''], 'rms_ts-r': ['','',''], 'rms_p-r': ['','','']}
+        fdata[f] = {i: '' for i in vals}
+        fdata[f]['fnum'] = int(f.replace('f',''))
         # get ligand, size, charge for every frame even if not done
         templatepdb = glob.glob(f'{f}/model_*_template.pdb')[0]
         with open(templatepdb,'r') as fp:
@@ -49,6 +61,10 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
         with open(f'{f}/orca.inp','r') as fp:
             xyzline = [line.strip().split() for line in fp.readlines() if '*xyz' in line][0]
             fdata[f]['charge'] = xyzline[1]
+        # also get FG list
+        FGs = get_model_FGs(templatepdb,[fdata[f]['ligand']])
+        FGs = [i[0]+':'+i[1] for i in FGs]
+        modelFGs[f] = {g: 1 for g in FGs}
 
         if f in tsoptdone and f in irc1done and f in irc2done:
             os.chdir(f'{f}/tsopt')
@@ -89,15 +105,35 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                     errorlog.append(f'{f} - ircs are not distinct as product and reactant, please check!')
                     continue
 
-            # collect rmsds
+            # collect distances and rmsds
+            cmd.load(glob.glob('../model_*_template.pdb')[0],'tmp')
+            cmd.load(f'../{f}-opt.pdb','init')
+            cmd.load(f'../tsconstrained/tsguess.pdb','guess')
             cmd.load(f'{f}-{lig}{modeltype}-ts-opt.pdb','ts')
             cmd.load(f'{fdata[f]["reactant"]}/{f}-{lig}{modeltype}-reactant-opt.pdb','r')
             cmd.load(f'{fdata[f]["product"]}/{f}-{lig}{modeltype}-product-opt.pdb','p')
-            for i in ['ts','p']:
-                fdata[f][f'rms_{i}-r'][0] = str(round(cmd.rms_cur(i,'r'),2))
-                fdata[f][f'rms_{i}-r'][1] = str(round(cmd.rms_cur(f'{i} and not resn COR and not resn WAT', '(r and not resn COR and not resn WAT)'),2))
-                fdata[f][f'rms_{i}-r'][2] = str(round(cmd.rms_cur(f'{i} and resn WAT', '(r and resn WAT)'),2))
+            pdb, res_info, tot_charge = read_pdb(f'{f}-{lig}{modeltype}-ts-opt.pdb')
+            allH = [f'{line[5]}/{line[6]}/{line[2].strip()}' for line in pdb if line[2].strip().startswith('H')]
+            allheavy = [f'{line[5]}/{line[6]}/{line[2].strip()}' for line in pdb if not line[2].strip().startswith('H')]
+            for i in ['ts','r','p']:
+                fdata[f][f'{i}_C1-C9_dist'] = str(round(cmd.get_distance(f'{i} and resn COR and name C1', f'{i} and resn COR and name C9'),2))
+                fdata[f][f'{i}_C5-O7_dist'] = str(round(cmd.get_distance(f'{i} and resn COR and name C5', f'{i} and resn COR and name O7'),2))
+            fdata[f]['r_C1-C5-O7-C9_dihedral'] = str(round(cmd.get_dihedral(f'r///{ligid}/C1',f'r///{ligid}/C5',f'r///{ligid}/O7',f'r///{ligid}/C9'),2))
+            fdata[f]['p_C5-C1-C9-O7_dihedral'] = str(round(cmd.get_dihedral(f'p///{ligid}/C5',f'p///{ligid}/C1',f'p///{ligid}/C9',f'p///{ligid}/O7'),2))
+            for i in [('tmp','init'),('guess','ts'),('ts','r'),('p','r'),('ts','p')]:
+                fdata[f][f'rms_{i[0]}-{i[1]}_all'] = str(round(cmd.rms_cur(i[0],i[1]),2))
+                fdata[f][f'rms_{i[0]}-{i[1]}_prot'] = str(round(cmd.rms_cur(f'{i[0]} and not resn COR and not resn WAT', f'({i[1]} and not resn COR and not resn WAT)'),2))
+                fdata[f][f'rms_{i[0]}-{i[1]}_wat'] = str(round(cmd.rms_cur(f'{i[0]} and resn WAT', f'({i[1]} and resn WAT)'),2))
+                #'max_Hmove_tmp-init', 'max_Hmove_guess-ts', 'max_Hmove_ts-r', 'max_Hmove_ts-p'
+                Hdists = [cmd.get_distance(f'{i[0]}//{hydro}',f'{i[1]}//{hydro}') for hydro in allH]                
+                fdata[f][f'maxmove_H_{i[0]}-{i[1]}'] = str(round(max(Hdists),2))
+                heavydists = [cmd.get_distance(f'{i[0]}//{heavy}',f'{i[1]}//{heavy}') for heavy in allheavy]
+                fdata[f][f'maxmove_heavy_{i[0]}-{i[1]}'] = str(round(max(heavydists),2))
             cmd.delete('all')
+
+            # collect TS imaginary mode
+            out = subprocess.run(['tac orca.out | grep -m 1 -B 30 "VIBRATIONAL FREQUENCIES" | grep " 6: " | awk \'{print $2}\''],shell=True,stdout=PIPE,stderr=STDOUT,universal_newlines=True)
+            fdata[f]['ts_mode'] = out.stdout.strip()
 
             # collect energies
             out = subprocess.run(['extract-orca.sh'],shell=True,stdout=PIPE,stderr=STDOUT,universal_newlines=True)
@@ -110,31 +146,41 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                 dirsplit = [d for d in line[0].split('/') if d]
                 gkcal = float(line[5])*627.51
                 if dirsplit[-1] == 'tsopt':
-                    fdata[f]['tsvals'] = line + [str(gkcal)]
+                    #fdata[f]['tsvals'] = line + [str(gkcal)]
+                    for i,v in enumerate(line):
+                        fdata[f][f'ts_{extractvals[i]}'] = v
+                    fdata[f]['ts_Gkcal'] = str(gkcal)
                     Gts = gkcal
                 elif dirsplit[-1] == fdata[f]['reactant']:
-                    fdata[f]['rvals'] = line + [str(gkcal)]
+                    #fdata[f]['rvals'] = line + [str(gkcal)]
+                    for i,v in enumerate(line):
+                        fdata[f][f'react_{extractvals[i]}'] = v
+                    fdata[f]['react_Gkcal'] = str(gkcal)
                     Gr = gkcal
                 elif dirsplit[-1] == fdata[f]['product']:
-                    fdata[f]['pvals'] = line + [str(gkcal)]
+                    #fdata[f]['pvals'] = line + [str(gkcal)]
+                    for i,v in enumerate(line):
+                        fdata[f][f'prod_{extractvals[i]}'] = v
+                    fdata[f]['prod_Gkcal'] = str(gkcal)
                     Gp = gkcal
             if Gts and Gr and Gp:
                 fdata[f]['dGa'] = str(Gts - Gr)
                 fdata[f]['dGr'] = str(Gp - Gr)
+                fdata[f]['done'] = 'Y'
             else:
                 errorlog.append(f'{f} - extract-orca.sh output not parsed as expected, please check outputs!')
-
-            
         
-#line info will be: frame, ligand, size, charge, reactant irc, product irc, calculated dGa, calculated dGr, rmsds [3x2 = 6cols], extract-orca outputs with G kcal/mol [9x3 = 24 cols]
-        lineinfo = [f] + [fdata[f][i] for i in ['ligand','size','charge','reactant','product','dGa','dGr']] + fdata[f]['rms_ts-r'] + fdata[f]['rms_p-r'] + fdata[f]['tsvals'] + fdata[f]['rvals'] + fdata[f]['pvals']
-        lineinfo = ','.join(lineinfo)
-        
-        # write csv line
         os.chdir(homedir)
-        datafile.write(lineinfo+'\n')
 
-    datafile.close()
+    # make results csv
+    df = pd.DataFrame.from_dict(fdata,orient='index')
+    df.to_csv(f'{dirlabel}_results.csv',index_label='frame')
+
+    # make FG csv
+    df2 = pd.DataFrame.from_dict(modelFGs,orient='index')
+    df2.to_csv(f'{dirlabel}_model_FGs.csv',index_label='frame')
+
+    # make error log file if any errors
     if errorlog:
         with open(f'{dirlabel}_collection_errors.txt') as fp:
             fp.write('\n'.join(errorlog))
@@ -145,7 +191,7 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
 ### make quick plot ###
 def plotcollectedresults(dirlabel):
     df = pd.read_csv(f'{dirlabel}_results.csv',index_col='frame')
-    df.insert(loc=0, column='fnum', value=[int(i.replace('f','')) for i in df.index.values])
+    #df.insert(loc=0, column='fnum', value=[int(i.replace('f','')) for i in df.index.values])
     fig, axs = plt.subplots(nrows=2,ncols=1,figsize=(10,6),layout='constrained')
     line1 = axs[0].hlines(df['dGa'].mean(),df['fnum'].min()-1,df['fnum'].max()+1,colors='k',linestyles='dashed',label=r"mean $\Delta G ^\ddagger$"+f" = {df['dGa'].mean().round(2)} kcal/mol")
     line2 = axs[1].hlines(df['dGr'].mean(),df['fnum'].min()-1,df['fnum'].max()+1,colors='k',linestyles='dashed',label=r"mean $\Delta G _{rxn}$"+f" = {df['dGr'].mean().round(2)} kcal/mol")
@@ -159,6 +205,8 @@ def plotcollectedresults(dirlabel):
 
 
 if __name__ == '__main__':
+    st = time.perf_counter()
+    
     parser = argparse.ArgumentParser(description="collect ts/irc1/irc2 energies and calculate free energies of activation/reaction and convert optimized strucs to pdb format for big CM MD->QM project")
     parser.add_argument('-dir',dest='workdir',default='.',help='directory to collect results for, default = current dir')
     parser.add_argument('-batch',action='store_true',help='label collected results as being from batch models instead of individual')
@@ -178,4 +226,9 @@ if __name__ == '__main__':
         modeltype = ''
 
     fdata = process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,modeltype)
-    plotcollectedresults(dirlabel)    
+    plotcollectedresults(dirlabel)
+
+    et = time.perf_counter()
+    seconds = et-st
+    m, s = divmod(seconds, 60)
+    print(f'Completed in {int(m)} minute(s) and {int(s)} second(s)')

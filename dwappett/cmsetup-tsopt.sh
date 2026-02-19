@@ -10,6 +10,7 @@ elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
   echo "usage: cmsetup-tsopt.sh check_tsconstrained_done.txt
 uses the tsconstrained orca.xyz and orca.hess files to set up a full ts optimisation
 script will skip fxxxxx dirs which already have a tsopt subdir!"
+  exit
 elif [[ "$1" != "check_tsconstrained_done.txt" ]]; then
   echo "this script is designed to be used with the check_tsconstrained_done.txt list which is not what was provided
 are you sure you want to continue with list $1? [Y/N]"

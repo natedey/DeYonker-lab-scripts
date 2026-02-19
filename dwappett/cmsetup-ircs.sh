@@ -10,6 +10,7 @@ elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
   echo "usage: cmsetup-ircs.sh check_tsopt_done.txt
 uses gen_irc_orca.py to set up irc calcs from the tsopt outputs
 script will skip fxxxxx dirs which already have irc1/irc2 subdirs!"
+  exit
 elif [[ "$1" != "check_tsopt_done.txt" ]]; then
   echo "this script is designed to be used with the check_tsopt_done.txt list which is not what was provided
 are you sure you want to continue with list $1? [Y/N]"

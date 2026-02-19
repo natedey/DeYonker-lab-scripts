@@ -11,6 +11,7 @@ elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
   echo "usage: cmsetup-tsconstrained.sh check_initialopt_done.txt
 sets up a ts guess structure and prepares an input for the constrained opt
 script will skip fxxxxx dirs which already have a tsconstrained subdir!"
+  exit
 elif [[ "$1" != "check_initialopt_done.txt" ]]; then
   echo "this script is designed to be used with the check_initialopt_done.txt list which is not what was provided
 are you sure you want to continue with list $1? [Y/N]"
@@ -18,6 +19,7 @@ are you sure you want to continue with list $1? [Y/N]"
   if [[ "${altlist,,}" == "y" ]]; then
     echo "continuing with list $1"
   else
+    echo "quitting"
     exit
   fi
 fi

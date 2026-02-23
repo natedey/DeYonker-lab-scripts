@@ -12,14 +12,15 @@ as an alternative to setting up a slurm array with arraytaskthrottle=1"
 exit
 fi
 
+wkdr=$(pwd)
 cd $1
 ID=$(sbatch --parsable 1)
 echo "directory $1: submitted job ${ID}"
-cd ..
+cd $wkdr
 shift
 for i in "$@"; do
  cd $i
  ID=$(sbatch --parsable --dependency=afterany:${ID} 1)
  echo "directory $i: submitted job ${ID}"
- cd ..
+ cd $wkdr
 done

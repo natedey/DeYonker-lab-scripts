@@ -69,7 +69,10 @@ if __name__ == '__main__':
   
     # if tsopt option selected, make changes to input file contents 
     if args.tsopt:
-        inplines[0] = inplines[0].replace(' opt ',' optts ')
+        if ' opt ' not in inplines[0]:
+            inplines[0] = inplines[0].replace('! ','! optts ')
+        else:
+            inplines[0] = inplines[0].replace(' opt ',' optts ')
         inplines = [l for l in inplines if "{ B" not in l]
         geomstart = [i for i,s in enumerate(inplines) if '%geom' in s][0]
         inplines = inplines[0:geomstart+1] + ['  inhess read\n',f'  inhessname "{args.inhess}"\n'] + inplines[geomstart+1:] 

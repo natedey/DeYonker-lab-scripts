@@ -20,22 +20,12 @@ def makeguesspdb(modelpdb,newpdb,lig):
     mod_pdb, res_info, tot_charge_t = read_pdb(modelpdb)
     new_pdb, binfo, tot_charge = read_pdb(newpdb)
     newcoord = {atom[2].strip(): {'x': atom[8], 'y': atom[9], 'z': atom[10]} for atom in new_pdb}
-    #temporary_pdb = []
-    #tsadone = 0
     for line in mod_pdb:
         if line[4].strip() == lig:
-            #atomname=line[2],x=line[8],y=line[9],z=line[10]
             line[8] = newcoord[line[2].strip()]['x']
             line[9] = newcoord[line[2].strip()]['y']
             line[10] = newcoord[line[2].strip()]['z']
-        #if line[4].strip() == lig and tsadone == 0:
-        #    temporary_pdb += new_pdb
-        #    #temporary_pdb.append(new_pdb)
-        #    tsadone = 1
-        #elif line[4].strip() != lig:
-        #    temporary_pdb.append(line)
  
-    #write_pdb('tsguess.pdb',temporary_pdb)
     write_pdb('tsguess.pdb',mod_pdb)   
 
 ##########
@@ -59,18 +49,22 @@ if __name__ == '__main__':
         lig = 'COR'
     else:
         lig = 'TSA'
+
+    lines = open(args.tspdb,'r').readlines()
+    lines = [line for line in lines if 'COR' in line]
+    if lines:
+        oldlig = 'COR'
+    else:
+        oldlig = 'TSA'
+
     
     # align old ts to model
     with open("log.pml", "w") as logf:
         logf.write(f"load {modelpdb}, modelpdb\n")
         logf.write(f"load {tspdb}, tspdb\n")
-        #if md:
-        #    logf.write(f"pair_fit (tspdb and resn TSA and elem O), (modelpdb and resn COR and elem O)\n")
-        #else:
-        #    logf.write(f"pair_fit (tspdb and resn TSA and elem O), (modelpdb and resn TSA and elem O)\n")
-        logf.write(f"pair_fit (tspdb and resn TSA and elem O), (modelpdb and resn {lig} and elem O)\n")
-        logf.write(f'save {newpdb}, (tspdb and resn TSA)\n')
-        logf.write(f"list1 = []\niterate (tspdb and resn TSA), list1.append((chain,resi,resn,name))\nlist2 = []\niterate (modelpdb and not resn COR and not resn TSA), list2.append((chain,resi,resn,name))\n")
+        logf.write(f"pair_fit (tspdb and resn {oldlig} and elem O), (modelpdb and resn {lig} and elem O)\n")
+        logf.write(f'save {newpdb}, (tspdb and resn {oldlig})\n')
+        logf.write(f"list1 = []\niterate (tspdb and resn {oldlig}), list1.append((chain,resi,resn,name))\nlist2 = []\niterate (modelpdb and not resn COR and not resn TSA), list2.append((chain,resi,resn,name))\n")
         logf.write("""python
 clashes = []
 for at1 in list1:

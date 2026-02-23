@@ -19,6 +19,8 @@ def write_irc_inputs(inp_f,dir1,dir2,irc1,irc2,scale):
     with open(inp_f) as f:
         inplines = f.readlines()
     inplines[0] = inplines[0].replace('optts','opt').replace('moread','').replace('tightopt','')
+    if ' opt ' not in inplines[0]:
+       inplines[0] = inplines[0].replace('! ','! opt ')
     inplines = [l for l in inplines if 'inhess' not in l.lower() and not l.startswith('# ') and 'calc_hess' not in l.lower()]
     # remove modify internal stuff
     if [l for l in inplines if 'modify_internal' in l]:

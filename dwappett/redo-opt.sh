@@ -25,7 +25,12 @@ redotype=$(echo ${1//.txt} | awk -F_ '{print $3}' )
 wkdr=$(pwd)
 joblist="none"
 
-if [[ "$redotype" == "freqcrash" ]]; then
+if [ -f 1-array-redo-$calctype-$redotype ]; then
+  echo "1-array-redo-$calctype-$redotype exists. You've run this already..."
+  echo "You can make sure you've submitted the existing 1-array-redo-$calctype-$redotype by running cm-md-status.py
+If the redo array is running, the $redotype labels in the $calctype columns will be appended with running/queued and coloured blue instead of red"
+  exit
+elif [[ "$redotype" == "freqcrash" ]]; then
   echo "this script does not restart freqcrash jobs! run the command below instead:"
   echo "redo-freq.sh $1"
   exit
@@ -106,7 +111,7 @@ else
   cp ~/git/DeYonker-lab-scripts/dwappett/1-array-$calctype 1-array-redo-$calctype-$redotype
   jobfile="1-array-redo-$calctype-$redotype"
 fi
-sed -i "s/ASTART-AEND\%4/${joblist}%2/" $jobfile
-sed -i "s/time=24:00:00/time=48:00:00/" $jobfile
+sed -i "s/ASTART-AEND\%1/${joblist}%1/" $jobfile
+#sed -i "s/time=24:00:00/time=48:00:00/" $jobfile
 echo ""
 echo "created $jobfile" 

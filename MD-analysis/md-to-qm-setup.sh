@@ -153,7 +153,7 @@ if [ -d "tempdir" ]; then
   sed -i "s/tempdir/f${startnum}-f$fnum/" workdirs.txt
   if [[ "$job" == "array" ]]; then
     cp ~/git/DeYonker-lab-scripts/dwappett/1-array f${startnum}-f$fnum/1-array
-    sed -i "s/ASTART-AEND\%4/$((10#$startnum))-$((10#$fnum))%1/" f${startnum}-f$fnum/1-array
+    sed -i "s/ASTART-AEND\%1/$((10#$startnum))-$((10#$fnum))\%1/" f${startnum}-f$fnum/1-array
   fi
 fi
 

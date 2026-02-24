@@ -2,7 +2,7 @@
 """
 Script created by DAW late 2024/early 2025
 """
-import os, sys
+import os, os.path, sys
 import subprocess
 import argparse
 from read_write_pdb import *
@@ -41,7 +41,8 @@ if __name__ == '__main__':
     parser.add_argument("-md",action='store_true')
     args = parser.parse_args()
     modelpdb = args.modpdb
-    tspdb = args.tspdb
+    #tspdb = args.tspdb
+    tspdb = os.path.expanduser(args.tspdb)
     newpdb = args.newpdb
     md = args.md
     
@@ -50,7 +51,7 @@ if __name__ == '__main__':
     else:
         lig = 'TSA'
 
-    lines = open(args.tspdb,'r').readlines()
+    lines = open(tspdb,'r').readlines()
     lines = [line for line in lines if 'COR' in line]
     if lines:
         oldlig = 'COR'

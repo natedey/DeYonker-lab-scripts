@@ -13,11 +13,14 @@ exit
 fi
 
 wkdr=$(pwd)
+# go into first directory, submit and capture job id
 cd $1
 ID=$(sbatch --parsable 1)
 echo "directory $1: submitted job ${ID}"
 cd $wkdr
+# shift removes first arg from $@ input argument list
 shift
+# now we can easily loop through the remaining dirs, building the dependencies
 for i in "$@"; do
  cd $i
  ID=$(sbatch --parsable --dependency=afterany:${ID} 1)

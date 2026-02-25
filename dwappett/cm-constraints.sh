@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # usage:
-# get-cm-constraints.sh {model} {optional: format}
+# cm-constraints.sh {model} {optional: format}
 # prints constraints for C1-C9 and C5-O7 for constrained ts opt
 # if gaussian, prints "at1 at2 F"
 # if orca, prints "{ B at1-1 at2-1 C }"

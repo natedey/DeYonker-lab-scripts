@@ -126,8 +126,11 @@ for i in $(echo $directories); do
  rm check_initialopt_*.txt check_tsconstrained_*.txt check_tsopt_*.txt check_irc*.txt 2> /dev/null
  rm check_pending.txt 2> /dev/null
  for d in f*; do
-  echo -ne "checking $i/$d \033[K\r"
-  checkdirstate $d initialopt
+  if [ -f $d/orca.out ]; then 
+    echo -ne "checking $i/$d \033[K\r"
+    checkdirstate $d initialopt
+  else continue
+  fi
   if [ -d $d/tsconstrained ] && [ -f $d/tsconstrained/orca.out ]; then checkdirstate $d/tsconstrained tsconstrained; else continue; fi
   if [ -d $d/tsopt ] && [ -f $d/tsopt/orca.out ]; then checkdirstate $d/tsopt tsopt; else continue; fi
   if [ -d $d/tsopt/irc1 ] && [ -f $d/tsopt/irc1/orca.out ]; then checkdirstate $d/tsopt/irc1 irc1; fi
@@ -137,6 +140,7 @@ for i in $(echo $directories); do
  echo -ne "checking queue \033[K\r"
  for j in $(squeue --me -t pending -r -o "%K_%j_%Z" -h | grep $(pwd)$); do
   jname=$(echo $j | awk -F_ '{print $2}' | sed "s/ORCA-//")
+  if [[ "$jname" == "ORCAJOB" ]]; then jname="initialopt"; fi
   dname=$(echo $j | awk -F_ '{ printf("f%05d\n",$1) }')
   if [[ $(grep -H $dname check_${jname}_*.txt | grep -v "running") ]]; then
    for k in $(grep -H $dname check_${jname}_*.txt | awk -F: '{print $1}'); do

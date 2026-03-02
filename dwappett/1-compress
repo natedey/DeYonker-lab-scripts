@@ -17,9 +17,6 @@ echo "Whole QM dir before compression: $(du -hs)"
 for i in $(ls -d f*); do	# gets all fxxxxx-fxxxxx directories
  cd $i
  echo "$i before compression: $(du -hs)"
- # compress all maxcyc and optcrash output files 
- find . -type f -name *-maxcyc-out -exec gzip -v {} \; 
- find . -type f -name *-optcrash-out -exec gzip -v {} \;
  # if calc is done; compress orca.property.txt 
  for j in initialopt tsconstrained tsopt irc1 irc2; do
   if [ -f "check_${j}_done.txt" ]; then
@@ -27,6 +24,9 @@ for i in $(ls -d f*); do	# gets all fxxxxx-fxxxxx directories
     if [ -f $d/orca.property.txt ]; then
      gzip -v $d/orca.property.txt
     fi
+    # compress all maxcyc and optcrash output files 
+    find $d/* -maxdepth 0 -type f -name *-maxcyc-out -exec gzip -v {} \;
+    find $d/* -maxdepth 0 -type f -name *-optcrash-out -exec gzip -v {} \;
    done
   fi
  done

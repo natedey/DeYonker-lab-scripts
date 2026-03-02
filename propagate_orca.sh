@@ -36,10 +36,12 @@ fi
 fi
 
 if [[ "$count" -gt 1 ]]; then
-  last=$(ls $((count - 1))-*-out)
-  if cmp -s $last $2.out; then
-    echo "already propagated: $2.out and $last are the same file"
-    exit
+  if ls "$((count - 1))-*-out" 1> /dev/null 2>&1; then
+    last=$(ls $((count - 1))-*-out)
+    if cmp -s $last $2.out; then
+      echo "already propagated: $2.out and $last are the same file"
+      exit
+    fi
   fi
 fi
 

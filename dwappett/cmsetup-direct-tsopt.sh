@@ -38,7 +38,7 @@ fi
 wkdr=$(pwd)
 joblist="none"
 warn="please double check dirs that did not have existing tsopt subdirs:"
-for i in $(cat $1); do
+for i in $(awk '{print $1}' $1); do
   d=$(echo $i | awk -F/ '{print $1}')
   cd $d
   if [ -d "tsopt" ]; then

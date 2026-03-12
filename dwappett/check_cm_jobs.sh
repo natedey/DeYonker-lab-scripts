@@ -70,11 +70,13 @@ checkdirstate () {
      sed -i "\#$1#d" check_${2}_$state.txt
     elif [[ "$2" == "irc"* ]] && [[ "$state" == "done" ]] && [[ "$nmode" != 0 ]]; then
      if [[ "$tightopt" == 1 ]]; then
-      echo "$1 - $nmode imaginary modes, first mode is $firstmode, tightopt already on" >> check_${2}_CHECK_MANUALLY.txt
+      sed -i "s#$1#$1 - $nmode imaginary modes, first mode is $firstmode, tightopt already on#" check_${2}_$state.txt
+      #echo "$1 - $nmode imaginary modes, first mode is $firstmode, tightopt already on" >> check_${2}_CHECK_MANUALLY.txt
      else
       echo "$1 - $nmode imaginary modes, first mode is $firstmode" >> check_${2}_extraimagmodes.txt
+      sed -i "\#$1#d" check_${2}_$state.txt
      fi
-     sed -i "\#$1#d" check_${2}_$state.txt
+     #sed -i "\#$1#d" check_${2}_$state.txt
     fi
    fi
   fi

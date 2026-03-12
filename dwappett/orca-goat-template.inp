@@ -1,0 +1,9 @@
+! XTB SmallPrint TightSCF Slowconv GOAT UNO UCO DIIS
+%pal nprocs 20 end
+%MaxCore 2000
+%scf Maxiter=350 end
+%goat
+  align true
+end
+
+* xyzfile 0 2 struc.xyz

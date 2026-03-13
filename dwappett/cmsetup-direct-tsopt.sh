@@ -10,11 +10,11 @@ elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
   echo "
 usage: cmsetup-direct-tsopt.sh [list]
 this script moves the existing tsopt directory to tsopt-failed, then sets up a new optts job on the tsguess.pdb structure
-this should only be used if the post-tsconstrained tsopt has totally failed (or I guess maybe if the tsconstrained has failed?)
+this should only be used if the post-tsconstrained tsopt has totally failed
 
-the automated check_tsopt_[not-done].txt lists do not distinguish whether a tsopt is currently stuck at the normal first try/direct opt/new guess
+the automated check_tsopt_[not-done].txt lists do not distinguish whether a tsopt is currently stuck at the normal first try/new guess/direct tsopt
 and this script does not skip already set up directories like the original cmsetup-tsopt does!!!
-to be safe, please prepare the list BY HAND, FROM SCRATCH, EVERY TIME!
+to be safe, please prepare the list BY HAND!
 "
   exit
 elif grep -q -e 'initialopt' -e 'irc1' -e 'irc2' <<< $1; then
@@ -23,9 +23,9 @@ elif grep -q -e 'initialopt' -e 'irc1' -e 'irc2' <<< $1; then
 elif [[ "$1" == "check_tsopt_"* || "$1" == "check_tsconstrained_"* ]]; then
   echo "
   looks like you've provided one of the standard automated check_cm_jobs.sh output lists which is not recommended.
-  those lists do not distinguish whether a tsopt is currently stuck at the normal first try/direct opt/new guess
+  those lists do not distinguish whether a tsopt is currently stuck at the normal first try/new guess/direct tsopt
   and this script does not skip already set up directories like the original cmsetup-tsopt does!!!
-  direct optimisation of the tsguess should only be tried when all the normal steps have failed, but before a new guess.
+  direct optimisation of the tsguess should only be tried when all the normal steps have failed even with a new guess.
   enter Y to continue with list $1 or anything else to cancel"
   read altlist
   if [[ "${altlist,,}" == "y" ]]; then

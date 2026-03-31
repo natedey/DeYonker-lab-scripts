@@ -151,7 +151,10 @@ if __name__ == '__main__':
         df = pd.DataFrame.from_dict(statuscount,orient='columns')
         df = df[['initialopt','tsconstrained','tsopt','irc1','irc2']]
 
-    print(tabulate.tabulate(df,headers=df.columns))
+    if usecol:
+        print(tabulate.tabulate(df,headers=df.columns))
+    else:
+        print(df)
 
     # get number of finished jobs
     alldone = [key for key in statustable.keys() if statustable[key] == {'initialopt': 'done', 'tsconstrained': 'done', 'tsopt': 'done', 'irc1': 'done', 'irc2': 'done'}]

@@ -2,4 +2,4 @@ nprocs: 4
 maxcore: 2
 jobtype: opt numfreq
 method: Native-GFN2-xTB
-solvent: ALPB(water) nopop
+solvent: ALPB(water) nopop NoPropFile

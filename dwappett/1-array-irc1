@@ -55,15 +55,16 @@ export TMPDIR=/scratch/$USER/$SLURM_JOB_ID/
 cp $CALCDIR/$name.inp $SCRATCHDIR/
 cp $CALCDIR/$name.hess $SCRATCHDIR/
 cp $CALCDIR/*-extraimagmodes-hess $SCRATCHDIR/
-#cp  $SLURM_SUBMIT_DIR/*.xyz $SCRATCHDIR/
 
 cd $SCRATCHDIR
 
-### Executable: Input-Ouput #####
+### Executable: Input-Output #####
 $orcadir/orca $name.inp '--bind-to core:overload-allowed --use-hwthread-cpus' > $CALCDIR/$name.out
-#orca $name.inp > $SLURM_SUBMIT_DIR/$name.out
 
 rm -rf *.tmp*
+### remove other unnecessary files just for this project ###
+rm $name.densities $name.densitiesinfo $name.engrad $name.bibtex $name.property.txt
+###
 cp $SCRATCHDIR/* $CALCDIR/
 cd $SLURM_SUBMIT_DIR
 rm -rf $SCRATCHDIR

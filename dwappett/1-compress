@@ -11,30 +11,42 @@ qmdir=$(pwd)
 SECONDS=0
 
 date
-echo "Compressing all *-maxcyc-out and *-optcrash-out, as well as orca.property.txt of finished jobs (based on check_[job]_done.txt lists)"
-echo "Whole QM dir before compression: $(du -hs)"
+echo "Deleting: all orca.property.txt, orca.densities, orca.densitiesinfo, orca.engrad, orca.bibtex files"
+echo "Compressing: all *-maxcyc-out, *-optcrash-out, gbw, and xtbw files for finished jobs, as well as hess files for finished initialopt/irc jobs"
+echo "Finished jobs determined based on check_[job]_done.txt lists"
+echo "-----"
+echo "Whole QM dir before cleanup: $(du -hs)"
 
 for i in $(ls -d f*); do	# gets all fxxxxx-fxxxxx directories
  cd $i
- echo "$i before compression: $(du -hs)"
- # if calc is done; compress orca.property.txt 
+ echo "$i before cleanup: $(du -hs)"
+ # remove any densities/densitiesinfo/engrad/bibtex files and property files (original or compressed)
+ find . \( -name "orca.densities" -o -name "orca.densitiesinfo" -o -name "orca.engrad" -o -name "orca.bibtex" \) -delete
+ find . \( -name "orca.property.txt" -o -name "orca.property.txt.gz" \) -delete
+ # if calc is done; compress stuff
  for j in initialopt tsconstrained tsopt irc1 irc2; do
   if [ -f "check_${j}_done.txt" ]; then
-   for d in $(cat check_${j}_done.txt); do
-    if [ -f $d/orca.property.txt ]; then
-     gzip -v $d/orca.property.txt
-    fi
+   for d in $(awk '{print $1}' check_${j}_done.txt); do
     # compress all maxcyc and optcrash output files 
     find $d/* -maxdepth 0 -type f -name *-maxcyc-out -exec gzip -v {} \;
     find $d/* -maxdepth 0 -type f -name *-optcrash-out -exec gzip -v {} \;
+    # compress all gbw, xtbw files
+    find $d/* -maxdepth 0 -type f -name *gbw -exec gzip -v {} \;
+    find $d/* -maxdepth 0 -type f -name *xtbw -exec gzip -v {} \;
+    # compress all hess and carthess files for initialopt and ircs
+    if [[ "$j" == "initialopt" ]] || [[ "$j" == "irc1" ]] || [[ "$j" == "irc2" ]]; then
+     find $d/* -maxdepth 0 -type f -name *.hess -exec gzip -v {} \;
+     find $d/* -maxdepth 0 -type f -name *-hess -exec gzip -v {} \;
+     find $d/* -maxdepth 0 -type f -name *.carthess -exec gzip -v {} \;
+    fi
    done
   fi
  done
- echo "$i after compression: $(du -hs)"
+ echo "$i after cleanup: $(du -hs)"
  cd $qmdir
 done
 
-echo "Whole QM dir after compression: $(du -hs)"
+echo "Whole QM dir after cleanup: $(du -hs)"
 
 if (( $SECONDS > 3600 )) ; then
     let "hours=SECONDS/3600"

@@ -65,6 +65,11 @@ for d in $(awk '{print $1}' $1); do
   # make sure we're just working with frame name not tsopt subdir or w/e
   i=$(echo $d | awk -F/ '{print $1}')
   echo $i
+  # remove from existing status lists!! in case you try to start other jobs before running check_cm_jobs again
+  for j in "done" "tsmodegone" "CHECK_MANUALLY"; do
+   sed -i "\#$i#d" check_tsconstrained_${j}.txt
+   sed -i "\#$i#d" check_tsopt_${j}.txt
+  done
   cd $i
   # move existing directories to make it clear what is happening
   for j in $(ls -d tsconstrained* tsopt*); do

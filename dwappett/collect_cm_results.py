@@ -119,6 +119,7 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                 else:
                     cmd.delete('all')
                     errorlog.append(f'{f} - ircs are not distinct as product and reactant, please check!')
+                    os.chdir(homedir)
                     continue
 
             ### collect structural info ###
@@ -238,6 +239,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="collect ts/irc1/irc2 energies and calculate free energies of activation/reaction and convert optimized strucs to pdb format for big CM MD->QM project")
     parser.add_argument('-dir',dest='workdir',default='.',help='directory to collect results for, default = current dir')
     parser.add_argument('-batch',action='store_true',help='label collected results as being from batch models instead of individual')
+    parser.add_argument('-filtbatch',action='store_true',help='label collected results as being from filtered batch models instead of individual')
     args = parser.parse_args()
 
     os.chdir(args.workdir)
@@ -250,6 +252,8 @@ if __name__ == '__main__':
     irc2done = [line.split('/')[0] for line in open('check_irc2_done.txt','r').readlines()]
     if args.batch:
         modeltype = 'batch'
+    elif args.filtbatch:
+        modeltype = 'filtbatch'
     else:
         modeltype = ''
 

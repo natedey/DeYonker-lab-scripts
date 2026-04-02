@@ -41,8 +41,8 @@ warn="please double check dirs that did not have existing tsopt subdirs:"
 for i in $(awk '{print $1}' $1); do
   d=$(echo $i | awk -F/ '{print $1}')
   for j in "done" "tsmodegone" "CHECK_MANUALLY"; do
-   sed -i "\#$d#d" check_tsconstrained_${j}.txt
-   sed -i "\#$d#d" check_tsopt_${j}.txt
+   if [ -f "check_tsconstrained_${j}.txt" ]; then sed -i "\#$d#d" check_tsconstrained_${j}.txt; fi
+   if [ -f "check_tsopt_${j}.txt" ]; then sed -i "\#$d#d" check_tsopt_${j}.txt; fi
   done
   cd $d
   if [ -d "tsopt" ]; then

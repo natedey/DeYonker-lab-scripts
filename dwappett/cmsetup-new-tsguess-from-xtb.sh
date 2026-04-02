@@ -67,8 +67,8 @@ for d in $(awk '{print $1}' $1); do
   echo $i
   # remove from existing status lists!! in case you try to start other jobs before running check_cm_jobs again
   for j in "done" "tsmodegone" "CHECK_MANUALLY"; do
-   sed -i "\#$i#d" check_tsconstrained_${j}.txt
-   sed -i "\#$i#d" check_tsopt_${j}.txt
+   if [ -f "check_tsconstrained_${j}.txt" ]; then sed -i "\#$i#d" check_tsconstrained_${j}.txt; fi
+   if [ -f "check_tsopt_${j}.txt" ]; then sed -i "\#$i#d" check_tsopt_${j}.txt; fi
   done
   cd $i
   # move existing directories to make it clear what is happening

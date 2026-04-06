@@ -14,7 +14,7 @@
 ################################################################
 checkdirstate () {
   keywords=$(grep -e "Geometry Optimization Run" -e "Energy+Gradient Calculation" -e "ORCA TERMINATED NORMALLY" -e "THE OPTIMIZATION HAS CONVERGED" -e "The optimization did not converge" -e "Geometry optimization failed" -e "Recalc_Hess" -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_" -e "Numerical calculation ISN'T COMPLETE" -e "VIBRATIONAL FREQUENCIES" -e "tightopt" -e "modify_internal" $1/orca.out)
-  if [ -f "$1/overwrite-check.txt" ]; then echo "$1 - $(cat $1/overwrite-check.txt)" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
+  if [ -f "$1/overwrite-check.txt" ]; then echo "$1 - $(cat $1/overwrite-check.txt)" >> check_${2}_CHECK_MANUALLY.txt; state="skipped"
   elif grep -q "Geometry Optimization Run" <<< $keywords; then
     if grep -q "ORCA TERMINATED NORMALLY" <<< $keywords; then
      if grep -q "THE OPTIMIZATION HAS CONVERGED" <<< $keywords; then echo $1 >> check_${2}_done.txt; state="done"
@@ -49,18 +49,19 @@ checkdirstate () {
   fi
   # double check freqs for tsopt/irc1/irc2
   if [[ "$2" == "tsopt" ]] || [[ "$2" == "irc1" ]] || [[ "$2" == "irc2" ]]; then
-   if [[ "$state" != "running" ]] && grep -q "VIBRATIONAL FREQUENCIES" <<< $keywords; then
+   if [[ "$state" != "running" ]] && [[ "$state" != "skipped" ]] && grep -q "VIBRATIONAL FREQUENCIES" <<< $keywords; then
     lastmodes=$(tac $1/orca.out | grep -m 1 -B 30 "VIBRATIONAL FREQUENCIES")
     nmode=$(grep "imaginary mode" <<< $lastmodes | wc -l)
     firstmode=$(grep " 6: " <<< $lastmodes | awk '{print $2}')
     if grep -q "tightopt" <<< $keywords; then tightopt=1; else tightopt=0; fi
     if [[ "$2" == "tsopt" ]] && (( $(echo "$firstmode > -100" | bc -l) )); then
      if grep -q "modify_internal" <<< $keywords; then
-      echo "$1 - $nmode imaginary modes, first mode is $firstmode" >> check_tsopt_tsmodegone.txt
+      sed -i "\#$1#d" check_${2}_$state.txt
+      echo "$1 - $nmode imaginary modes, first mode is $firstmode, ts mode gone" >> check_tsopt_CHECK_MANUALLY.txt
      else
+      sed -i "\#$1#d" check_${2}_$state.txt
       echo "$1 - $nmode imaginary modes, first mode is $firstmode, but modify_internal not added yet!" >> check_tsopt_tsmodegone.txt
      fi
-     sed -i "\#$1#d" check_${2}_$state.txt
     elif [[ "$2" == "tsopt" ]] && [[ "$state" == "done" ]] && [[ "$nmode" != 1 ]]; then
      if [[ "$tightopt" == 1 ]]; then
       echo "$1 - $nmode imaginary modes, first mode is $firstmode, tightopt already on" >> check_tsopt_CHECK_MANUALLY.txt
@@ -70,11 +71,15 @@ checkdirstate () {
      sed -i "\#$1#d" check_${2}_$state.txt
     elif [[ "$2" == "irc"* ]] && [[ "$state" == "done" ]] && [[ "$nmode" != 0 ]]; then
      if [[ "$tightopt" == 1 ]]; then
-      sed -i "s#$1#$1 - $nmode imaginary modes, first mode is $firstmode, tightopt already on#" check_${2}_$state.txt
-      #echo "$1 - $nmode imaginary modes, first mode is $firstmode, tightopt already on" >> check_${2}_CHECK_MANUALLY.txt
+      if (( $(echo "$firstmode < -40" | bc -l) )) || [[ "$nmode" -gt 2 ]]; then
+       echo "$1 - $nmode imaginary modes, first mode is $firstmode" >> check_${2}_excluded.txt
+       sed -i "\#$1#d" check_${2}_done.txt
+      else
+       sed -i "s#$1#$1 - $nmode imaginary modes, first mode is $firstmode, tightopt already on#" check_${2}_done.txt
+      fi
      else
       echo "$1 - $nmode imaginary modes, first mode is $firstmode" >> check_${2}_extraimagmodes.txt
-      sed -i "\#$1#d" check_${2}_$state.txt
+      sed -i "\#$1#d" check_${2}_done.txt
      fi
      #sed -i "\#$1#d" check_${2}_$state.txt
     fi
@@ -153,6 +158,16 @@ for i in $(echo $directories); do
    echo "dir $dname has pending $jname job, seems to be a new job not a restart" >> check_pending.txt
   fi
  done
+ # also filter out totally failed TSs?
+ if [ -f check_tsopt_CHECK_MANUALLY.txt ]; then
+  for j in $(awk -F/ '{print $1}' check_tsopt_CHECK_MANUALLY.txt); do
+   chk=$(grep $j check_tsopt_CHECK_MANUALLY.txt)
+   if [[ -d $j/original-tsguess-tsconstrained ]] && [[ -d $j/original-tsguess-tsopt ]] && [[ -d $j/tsopt-failed ]] && grep -q -e "ts mode gone" -e "tightopt already on" -e "excluded" <<< $chk; then
+    echo $chk >> check_tsopt_excluded.txt
+    sed -i "\#$j#d" check_tsopt_CHECK_MANUALLY.txt
+   fi
+  done
+ fi
  # remove any list files that are now empty after the pending stuff has been removed
  for j in check_*.txt; do
   if ! grep -q "f" $j; then rm $j; fi

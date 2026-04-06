@@ -36,24 +36,10 @@ if __name__ == '__main__':
     for f in folders:
         statustable[f] = {'initialopt': '', 'tsconstrained': '', 'tsopt': '', 'irc1': '', 'irc2': ''}
         if os.path.isfile(f'{f}/orca.inp'):
-            #if os.path.isfile(f'{f}/orca.out'):
-            #    statustable[f]['initialopt'] = 'running'
-            #else:
-            #    statustable[f]['initialopt'] = 'queued'
             statustable[f]['initialopt'] = 'inp_exists'
         for j in ['tsconstrained','tsopt']:
-            #if os.path.isfile(f'{f}/{j}/orca.inp'):
-            #    if os.path.isfile(f'{f}/{j}/orca.out'):
-            #        statustable[f][j] = 'running'
-            #    else:
-            #        statustable[f][j] = 'queued'
             if os.path.isfile(f'{f}/{j}/orca.inp'): statustable[f][j] = 'inp_exists'
         for j in ['irc1','irc2']:
-            #if os.path.isfile(f'{f}/tsopt/{j}/orca.inp'):
-            #    if os.path.isfile(f'{f}/tsopt/{j}/orca.out'):
-            #        statustable[f][j] = 'running'
-            #    else:
-            #        statustable[f][j] = 'queued'
             if os.path.isfile(f'{f}/tsopt/{j}/orca.inp'): statustable[f][j] = 'inp_exists'
     
     for fc in checkfiles:
@@ -105,6 +91,8 @@ if __name__ == '__main__':
                     statustablecol[key1][key2] = colored(statustable[key1][key2],'light_blue',None)
                 elif statustable[key1][key2] == 'done':
                     statustablecol[key1][key2] = 'done'
+                elif statustable[key1][key2] == 'excluded':
+                    statustablecol[key1][key2] = colored(statustable[key1][key2],'red',attrs=['dark'])
                 else:
                     statustablecol[key1][key2] = colored(statustable[key1][key2],'red',None)
             if statustablecol[key1]['initialopt'] == 'done' and statustablecol[key1]['tsconstrained'] == '':
@@ -124,18 +112,19 @@ if __name__ == '__main__':
     if args.filter:
         filteredrows = []
         for key in statustable.keys():
-            if statustable[key] != {'initialopt': 'done', 'tsconstrained': 'done', 'tsopt': 'done', 'irc1': 'done', 'irc2': 'done'}:
+            if statustable[key] != {'initialopt': 'done', 'tsconstrained': 'done', 'tsopt': 'done', 'irc1': 'done', 'irc2': 'done'} and 'excluded' not in [statustable[key]['tsopt'],statustable[key]['irc1'],statustable[key]['irc2']]:
                 filteredrows.append(key)
         df = df.loc[filteredrows,:]
         #print(tabulate.tabulate(df,headers=df.columns))
   
     # get total numbers
     if args.summary:
-        statuses = ['done', 'running/queued', 'maxcyc','orcaerror','optcrash','freqcrash','CHECK_MANUALLY','extraimagmodes','tsmodegone', 'total']
+        statuses = ['done', 'excluded', 'running/queued', 'maxcyc', 'orcaerror', 'optcrash', 'freqcrash', 'CHECK_MANUALLY', 'extraimagmodes', 'tsmodegone', 'total']
         statuscount = {i: {} for i in ['initialopt','tsconstrained','tsopt','irc1','irc2']}
         for j in ['initialopt','tsconstrained','tsopt','irc1','irc2']:
             statuscount[j]['total'] = len([statustable[k][j] for k in statustable.keys() if statustable[k][j]])
             statuscount[j]['done'] = len([statustable[k][j] for k in statustable.keys() if statustable[k][j] == 'done'])
+            statuscount[j]['excluded'] = len([statustable[k][j] for k in statustable.keys() if statustable[k][j] == 'excluded'])
             statuscount[j]['running/queued'] = len([statustable[k][j] for k in statustable.keys() if statustable[k][j] in ['running','queued']])
             if j == 'initialopt':
                 statuscount[j]['ready for next step'] = statuscount[j]['done'] - len([statustable[k]['tsconstrained'] for k in statustable.keys() if statustable[k]['tsconstrained']])
@@ -158,5 +147,6 @@ if __name__ == '__main__':
 
     # get number of finished jobs
     alldone = [key for key in statustable.keys() if statustable[key] == {'initialopt': 'done', 'tsconstrained': 'done', 'tsopt': 'done', 'irc1': 'done', 'irc2': 'done'}]
-    print(f'\n----- {len(alldone)} out of {len(folders)} models fully done -----')
+    exclude = [key for key in statustable.keys() if statustable[key]['tsopt'] == 'excluded' or statustable[key]['irc1'] == 'excluded' or statustable[key]['irc2'] == 'excluded']
+    print(f'\n----- {len(alldone)} out of {len(folders)} models fully done, {len(exclude)} excluded -----')
     

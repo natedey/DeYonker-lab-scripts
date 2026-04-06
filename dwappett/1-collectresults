@@ -1,0 +1,23 @@
+#!/bin/bash
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=1G
+#SBATCH --time=48:00:00
+#SBATCH --partition=acomputeq
+#SBATCH --output=collected.out
+
+source ~/.bashrc
+conda activate rinrus
+
+### job script for collecting results               ###
+### make sure you keep the to-collect file updated! ###
+
+echo "Automated results collection: $(date)"
+
+for i in $(cat to-collect.txt); do
+  check_cm_jobs.sh dir $i
+  collect_cm_results.py -dir $i
+done
+
+# resubmit this to run again next Friday
+nextrun=$(date -d 'next Saturday' '+%Y-%m-%d')
+sbatch --begin=${nextrun} 1-collectresults

@@ -13,79 +13,153 @@
 ### arg1 = directory to check, arg2 = list file label        ###
 ################################################################
 checkdirstate () {
+  # grep orca.out once for all the calc type/termination/success/error/settings keywords that this function checks, for efficiency
   keywords=$(grep -e "Geometry Optimization Run" -e "Energy+Gradient Calculation" -e "ORCA TERMINATED NORMALLY" -e "THE OPTIMIZATION HAS CONVERGED" -e "The optimization did not converge" -e "Geometry optimization failed" -e "Recalc_Hess" -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_" -e "Numerical calculation ISN'T COMPLETE" -e "VIBRATIONAL FREQUENCIES" -e "tightopt" -e "modify_internal" $1/orca.out)
-  if [ -f "$1/overwrite-check.txt" ]; then echo "$1 - $(cat $1/overwrite-check.txt)" >> check_${2}_CHECK_MANUALLY.txt; state="skipped"
+
+  ### all job types: assign initial state ###
+  # first check for manual override. if file contains word "exclude", then model will go into excluded list, otherwise it'll go into check_manually
+  if [ -f "$1/overwrite-check.txt" ]; then 
+    if grep -q -i "exclude" $1/overwrite-check.txt; then echo "$1 - $(cat $1/overwrite-check.txt)" >> check_${2}_excluded.txt; state="skipped"
+    else echo "$1 - $(cat $1/overwrite-check.txt)" >> check_${2}_CHECK_MANUALLY.txt; state="skipped"
+    fi
+  # otherwise determine job state from output keywords
   elif grep -q "Geometry Optimization Run" <<< $keywords; then
     if grep -q "ORCA TERMINATED NORMALLY" <<< $keywords; then
-     if grep -q "THE OPTIMIZATION HAS CONVERGED" <<< $keywords; then echo $1 >> check_${2}_done.txt; state="done"
-     elif grep -q "The optimization did not converge" <<< $keywords; then echo $1 >> check_${2}_maxcyc.txt; state="maxcyc"
-     #elif grep -q "Geometry optimization failed" <<< $keywords; then echo "$1 - geometry optimization failed" >> check_${2}_CHECK_MANUALLY.txt
-     elif grep -q "Geometry optimization failed" <<< $keywords; then echo $1 >> check_${2}_optcrash.txt; state="optcrash"
-     else echo "$1 - orca.out terminated normally but neither converged nor hit max cycles nor failed" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
+     if grep -q "THE OPTIMIZATION HAS CONVERGED" <<< $keywords; then 
+       # geom opt + terminated normally + converged = done
+       echo $1 >> check_${2}_done.txt; state="done"
+     elif grep -q "The optimization did not converge" <<< $keywords; then 
+       # geom opt + terminated normally + not converged = maxcyc
+       echo $1 >> check_${2}_maxcyc.txt; state="maxcyc"
+     elif grep -q "Geometry optimization failed" <<< $keywords; then 
+       # geom opt + terminated normally + failed = optcrash
+       echo $1 >> check_${2}_optcrash.txt; state="optcrash"
+       # geom opt + terminated normally + no recognised convergence message = check_manually
+     else 
+       echo "$1 - orca.out terminated normally but neither converged nor hit max cycles nor failed" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
+     fi
+     # if assigned maxcyc or optcrash but already doing recalc_hess 100, move to check_manually
+     if [[ "$state" == "maxcyc" || "$state" == "optcrash" ]] && grep -q  "Recalc_Hess 100" <<< $keywords; then
+      sed -i "\#$1#d" check_${2}_$state.txt
+      echo "$1 - opt didn't finish with Recalc_Hess 100" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
      fi
     else
-     if grep -q $(ls $1/slurm*.err | tail -1 | awk -F/ '{print $NF}' | sed "s/slurm-//; s/.err//") <<< $runningjobs; then echo $1 >> check_${2}_running.txt; state="running"
-     elif grep -q "Numerical calculation ISN'T COMPLETE!" <<< $keywords; then echo "$1 - frequency calculation problem, check geometry" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
-     elif grep -q "THE OPTIMIZATION HAS CONVERGED" <<< $keywords; then echo $1 >> check_${2}_freqcrash.txt; state="freqcrash"
-     elif grep -q "Recalc_Hess 100" <<< $keywords; then echo "$1 - opt didn't finish with Recalc_Hess 100" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
-     elif grep -q -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_" <<< $keywords; then echo $1 >> check_${2}_orcaerror.txt; state="orcaerror"
-     elif grep -q "CANCELLED AT .* DUE TO TIME LIMIT" $(ls $1/slurm*.err | tail -1); then echo $1 >> check_${2}_optcrash.txt; state="optcrash"
-     #else echo $1 >> check_${2}_running.txt
-     else echo "$1 - unrecognised termination" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
+     if grep -q $(ls $1/slurm*.err | tail -1 | awk -F/ '{print $NF}' | sed "s/slurm-//; s/.err//") <<< $runningjobs; then 
+       # geom opt + not terminated normally + last slurm err file in dir belongs to a currently running job = running
+       echo $1 >> check_${2}_running.txt; state="running"
+     elif grep -q "Numerical calculation ISN'T COMPLETE!" <<< $keywords; then 
+       # geom opt + not terminated normally + problem in freq calc = check_manually
+       echo "$1 - frequency calculation problem, check geometry" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
+     elif grep -q "THE OPTIMIZATION HAS CONVERGED" <<< $keywords; then 
+       # geom opt + not terminated normally + opt converged = freqcrash
+       echo $1 >> check_${2}_freqcrash.txt; state="freqcrash"
+     elif grep -q "Recalc_Hess 100" <<< $keywords; then 
+       # geom opt + not terminated normally + recalc_hess 100 = check_manually
+       echo "$1 - opt didn't finish with Recalc_Hess 100" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
+     elif grep -q -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_" <<< $keywords; then 
+       # geom opt + not terminated normally + error message = orcaerror
+       echo $1 >> check_${2}_orcaerror.txt; state="orcaerror"
+     elif grep -q "CANCELLED AT .* DUE TO TIME LIMIT" $(ls $1/slurm*.err | tail -1); then 
+       # geom opt + not terminated normally + slurm killed at time limit = optcrash
+       echo $1 >> check_${2}_optcrash.txt; state="optcrash"
+     else 
+       # geom opt + not terminated normally + no recognised ending keywords = check_manually
+       echo "$1 - unrecognised termination" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
      fi
     fi
   elif grep -q "Energy+Gradient Calculation" <<< $keywords; then
+    # check that there is a previous successful opt calculation
     optout=0
     for j in $(ls $1/*-out 2>/dev/null); do if grep -q "Geometry Optimization Run" $j; then optout=$j; fi; done
     if [[ "$optout" != "0" ]] && grep -q "THE OPTIMIZATION HAS CONVERGED" $optout; then
-     if grep -q "ORCA TERMINATED NORMALLY" <<< $keywords; then echo $1 >> check_${2}_done.txt; state="done"
-     elif grep -q $(ls $1/slurm*.err | tail -1 | awk -F/ '{print $NF}' | sed "s/slurm-//; s/.err//") <<< $runningjobs; then echo $1 >> check_${2}_running.txt; state="running"
-     elif grep -q "Numerical calculation ISN'T COMPLETE" <<< $keywords; then echo "$1 - frequency calculation problem" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
-     else echo $1 >> check_${2}_freqcrash.txt; state="freqcrash"
+     if grep -q "ORCA TERMINATED NORMALLY" <<< $keywords; then 
+       # opt converged in previous job + this freq calc done = done
+       echo $1 >> check_${2}_done.txt; state="done"
+     elif grep -q $(ls $1/slurm*.err | tail -1 | awk -F/ '{print $NF}' | sed "s/slurm-//; s/.err//") <<< $runningjobs; then 
+       # opt converged in previous job + this freq calc running = running
+       echo $1 >> check_${2}_running.txt; state="running"
+     elif grep -q "Numerical calculation ISN'T COMPLETE" <<< $keywords; then 
+       # opt converged in previous job + this freq calc had problem = check_manually
+       echo "$1 - frequency calculation problem" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
+     else 
+       # opt converged in previous job + this freq calc not done/running/failed = freqcrash
+       echo $1 >> check_${2}_freqcrash.txt; state="freqcrash"
      fi
-    else echo "$1 - can't find converged opt output but orca.out is only calculating frequencies" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
+    else 
+     # no previous converged opt (doesn't matter what status of freq calc is because it shouldn't be being done) = check_manually
+     echo "$1 - can't find converged opt output but orca.out is only calculating frequencies" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
     fi
-  else echo "$1 - orca.out does not seem to be a geometry optimization or frequency calculation" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
+  else 
+    # no "Geometry Optimization Run" or "Energy+Gradient Calculation" keyword = check_manually
+    echo "$1 - orca.out does not seem to be a geometry optimization or frequency calculation" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
   fi
-  # double check freqs for tsopt/irc1/irc2
+
+  ### tsopt/irc1/irc2 only: check imaginary modes and reassign state if needed ###
   if [[ "$2" == "tsopt" ]] || [[ "$2" == "irc1" ]] || [[ "$2" == "irc2" ]]; then
    if [[ "$state" != "running" ]] && [[ "$state" != "skipped" ]] && grep -q "VIBRATIONAL FREQUENCIES" <<< $keywords; then
+    # note: just grepping "imaginary mode" normally will also find all modes in (re)calc_hess steps but we only want final one!
+    # have to read file from end (tac = backwards cat) and stop at first frequencies block ("-m 1 -B 30" = print only first match and 30 lines before it (remember we're reading backwards))
     lastmodes=$(tac $1/orca.out | grep -m 1 -B 30 "VIBRATIONAL FREQUENCIES")
     nmode=$(grep "imaginary mode" <<< $lastmodes | wc -l)
     firstmode=$(grep " 6: " <<< $lastmodes | awk '{print $2}')
     if grep -q "tightopt" <<< $keywords; then tightopt=1; else tightopt=0; fi
+    # reassign jobs based on nmode/firstmode/tightopt
     if [[ "$2" == "tsopt" ]] && (( $(echo "$firstmode > -100" | bc -l) )); then
      if grep -q "modify_internal" <<< $keywords; then
+      # tsopt + any state + magnitude of biggest imag mode < 100 + modify_internal on (default as of feb/march 2026) = move to check_manually bc ts mode is gone
       sed -i "\#$1#d" check_${2}_$state.txt
-      echo "$1 - $nmode imaginary modes, first mode is $firstmode, ts mode gone" >> check_tsopt_CHECK_MANUALLY.txt
+      echo "$1 - $nmode imaginary modes, first mode is $firstmode, ts mode gone" >> check_tsopt_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
      else
+      # tsopt + any state + magnitude of biggest imag mode < 100 + modify_internal not on = move to tsmodegone (this should never happen anymore but leaving in just in case)
       sed -i "\#$1#d" check_${2}_$state.txt
-      echo "$1 - $nmode imaginary modes, first mode is $firstmode, but modify_internal not added yet!" >> check_tsopt_tsmodegone.txt
+      echo "$1 - $nmode imaginary modes, first mode is $firstmode, but modify_internal not added yet!" >> check_tsopt_tsmodegone.txt; state="tsmodegone"
      fi
     elif [[ "$2" == "tsopt" ]] && [[ "$state" == "done" ]] && [[ "$nmode" != 1 ]]; then
      if [[ "$tightopt" == 1 ]]; then
-      echo "$1 - $nmode imaginary modes, first mode is $firstmode, tightopt already on" >> check_tsopt_CHECK_MANUALLY.txt
+      # tsopt + done + >1 imaginary modes + tightopt on = move to check_manually
+      sed -i "\#$1#d" check_${2}_$state.txt
+      echo "$1 - $nmode imaginary modes, first mode is $firstmode, tightopt already on" >> check_tsopt_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
      else
-      echo "$1 - $nmode imaginary modes, first mode is $firstmode" >> check_tsopt_extraimagmodes.txt
+      # tsopt + done + >1 imaginary modes + no tightopt = move to extraimagmodes
+      sed -i "\#$1#d" check_${2}_$state.txt
+      echo "$1 - $nmode imaginary modes, first mode is $firstmode" >> check_tsopt_extraimagmodes.txt; state="extraimagmodes"
      fi
-     sed -i "\#$1#d" check_${2}_$state.txt
     elif [[ "$2" == "irc"* ]] && [[ "$state" == "done" ]] && [[ "$nmode" != 0 ]]; then
      if [[ "$tightopt" == 1 ]]; then
       if (( $(echo "$firstmode < -40" | bc -l) )) || [[ "$nmode" -gt 2 ]]; then
+       # irc + done + tightopt on + imag mode magnitude > 40 AND/OR >2 imaginary modes = move to excluded
        echo "$1 - $nmode imaginary modes, first mode is $firstmode" >> check_${2}_excluded.txt
        sed -i "\#$1#d" check_${2}_done.txt
       else
+       # irc + done + tightopt on + imag mode(s) acceptable = keep in done but make note of modes
        sed -i "s#$1#$1 - $nmode imaginary modes, first mode is $firstmode, tightopt already on#" check_${2}_done.txt
       fi
      else
+      # irc + done + tightopt not on yet = move to extraimagmodes
       echo "$1 - $nmode imaginary modes, first mode is $firstmode" >> check_${2}_extraimagmodes.txt
       sed -i "\#$1#d" check_${2}_done.txt
      fi
-     #sed -i "\#$1#d" check_${2}_$state.txt
     fi
    fi
   fi
+
+  ### tsopt only: after all imag mode-based reassignments, determine if model ready to exclude ###
+  if [[ "$2" == "tsopt" ]] && [[ "$state" == "CHECK_MANUALLY" ]]; then 
+    chk=$(grep "$1" check_tsopt_CHECK_MANUALLY.txt)
+    # make sure job has failed (based on message in check_manually)
+    if grep -q -i -e "ts mode gone" -e "tightopt already on" -e "Recalc_Hess 100" <<< $chk; then failed=1; else failed=0; fi
+    # make sure that alternative ways of getting ts have been tried (based on presence of renamed old dirs)
+    j=$(echo $1 | awk -F/ '{print $1}')
+    if [[ -d $j/original-tsguess-tsconstrained ]] && [[ -d $j/original-tsguess-tsopt ]] && [[ -d $j/tsopt-failed ]]; then triedallways=1; else triedallways=0; fi
+    # if both criteria met, exclude
+    if [[ "$failed" == 1 ]] && [[ "$triedallways" == 1 ]]; then
+     echo $chk >> check_tsopt_excluded.txt
+     sed -i "\#$j#d" check_tsopt_CHECK_MANUALLY.txt
+    fi
+  fi
 }
+
+
 
 #################################
 ### Actual script starts here ###
@@ -108,7 +182,7 @@ if you need to override automatically checked status: make a file in the dir cal
 elif [ -z "$1" ]; then
  directories="."
  echo "no argument given so checking current directory"
-elif [[ "$1" == "dir" ]]; then
+elif [[ "$1" == "dir" ]] || [[ "$1" == "-dir" ]]; then
  directories=$2
  echo "checking directory $2"
 elif [[ "$1" == "asarray" ]]; then
@@ -123,21 +197,27 @@ else
 fi
 
 
-wkdr=$(pwd)
+wkdr=$(pwd) 
 runningjobs=$(squeue --me -t running -r -o "%A" -h)
+pendingjobs=$(squeue --me -t pending -r -o "%K_%j_%Z" -h)
 
 for i in $(echo $directories); do
  echo $i
  cd $i
- rm check-new-jobs_done.txt check-new-jobs_maxcyc.txt check-new-jobs_freqcrash.txt check-new-jobs_optcrash.txt check-new-jobs_orcaerror.txt check-new-jobs_CHECK_MANUALLY.txt 1-array* 2> /dev/null
+ # remove all old lists and 1-array files
+ rm check-new-jobs_done.txt check-new-jobs_maxcyc.txt check-new-jobs_freqcrash.txt check-new-jobs_optcrash.txt check-new-jobs_orcaerror.txt check-new-jobs_CHECK_MANUALLY.txt 2> /dev/null
  rm check_initialopt_*.txt check_tsconstrained_*.txt check_tsopt_*.txt check_irc*.txt 2> /dev/null
  rm check_pending.txt 2> /dev/null
+ rm 1-array* 2> /dev/null
  for d in f*; do
+  # if fxxxxx dir has an initialopt orca.out file, start the checks, otherwise move on to next dir (continue)
   if [ -f $d/orca.out ]; then 
     echo -ne "checking $i/$d \033[K\r"
     checkdirstate $d initialopt
-  else continue
+  else 
+    continue
   fi
+  # check subsequent (tsconstrained/tsopt/irc) jobs if their output files exist too
   if [ -d $d/tsconstrained ] && [ -f $d/tsconstrained/orca.out ]; then checkdirstate $d/tsconstrained tsconstrained; else continue; fi
   if [ -d $d/tsopt ] && [ -f $d/tsopt/orca.out ]; then checkdirstate $d/tsopt tsopt; else continue; fi
   if [ -d $d/tsopt/irc1 ] && [ -f $d/tsopt/irc1/orca.out ]; then checkdirstate $d/tsopt/irc1 irc1; fi
@@ -145,10 +225,12 @@ for i in $(echo $directories); do
  done
  # filter out pending jobs
  echo -ne "checking queue \033[K\r"
- for j in $(squeue --me -t pending -r -o "%K_%j_%Z" -h | grep $(pwd)$); do
+ for j in $(grep $(pwd)$ <<< $pendingjobs); do
+  # $j from $pendingjobs in form arrayID_jobname_dir where arrayID = model number. this'll all break if you change job names to have underscores!
   jname=$(echo $j | awk -F_ '{print $2}' | sed "s/ORCA-//")
   if [[ "$jname" == "ORCAJOB" ]]; then jname="initialopt"; fi
   dname=$(echo $j | awk -F_ '{ printf("f%05d\n",$1) }')
+  # check if this pending job is in a list other than running, if it is then make sure to remove from there so not restarted twice!
   if [[ $(grep -H $dname check_${jname}_*.txt | grep -v "running") ]]; then
    for k in $(grep -H $dname check_${jname}_*.txt | awk -F: '{print $1}'); do
     echo "dir $dname has pending $jname job, removing from list $k to avoid possible duplication" >> check_pending.txt
@@ -158,17 +240,7 @@ for i in $(echo $directories); do
    echo "dir $dname has pending $jname job, seems to be a new job not a restart" >> check_pending.txt
   fi
  done
- # also filter out totally failed TSs?
- if [ -f check_tsopt_CHECK_MANUALLY.txt ]; then
-  for j in $(awk -F/ '{print $1}' check_tsopt_CHECK_MANUALLY.txt); do
-   chk=$(grep $j check_tsopt_CHECK_MANUALLY.txt)
-   if [[ -d $j/original-tsguess-tsconstrained ]] && [[ -d $j/original-tsguess-tsopt ]] && [[ -d $j/tsopt-failed ]] && grep -q -e "ts mode gone" -e "tightopt already on" -e "excluded" <<< $chk; then
-    echo $chk >> check_tsopt_excluded.txt
-    sed -i "\#$j#d" check_tsopt_CHECK_MANUALLY.txt
-   fi
-  done
- fi
- # remove any list files that are now empty after the pending stuff has been removed
+ # finally remove any empty list files left over after their contents have been moved to other lists by the imagmode/ts exclusion/pending checks
  for j in check_*.txt; do
   if ! grep -q "f" $j; then rm $j; fi
  done

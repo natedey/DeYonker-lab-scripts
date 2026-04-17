@@ -25,6 +25,7 @@ pd.set_option('display.max_rows', 500)
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Print status tables for CM MD-to-QM fxxxxx-fxxxxx directories")
     parser.add_argument('-filter',action='store_true',help='filter status table to only show unfinished models')
+    parser.add_argument('-excluded',action='store_true',help='filter status table to only show excluded models')
     parser.add_argument('-summary',action='store_true',help='print status counts table')
     args = parser.parse_args()
 
@@ -116,7 +117,14 @@ if __name__ == '__main__':
                 filteredrows.append(key)
         df = df.loc[filteredrows,:]
         #print(tabulate.tabulate(df,headers=df.columns))
-  
+
+    if args.excluded:
+        filteredrows = []
+        for key in statustable.keys():
+            if 'excluded' in [statustable[key]['tsopt'],statustable[key]['irc1'],statustable[key]['irc2']]:
+                filteredrows.append(key)
+        df = df.loc[filteredrows,:]  
+
     # get total numbers
     if args.summary:
         statuses = ['done', 'excluded', 'running/queued', 'maxcyc', 'orcaerror', 'optcrash', 'freqcrash', 'CHECK_MANUALLY', 'extraimagmodes', 'tsmodegone', 'total']

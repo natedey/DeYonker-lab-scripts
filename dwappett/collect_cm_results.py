@@ -28,7 +28,8 @@ import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 
-### quick function to get list of all imag modes (only needed for ircs) ###
+### quick function to get list of all imag modes for tsopts/ircs ###
+# noted in extract-orca.sh and check_cm_jobs.sh but reminder that we have to get the final imag modes this way to avoid also grabbing stuff from partway (re)calc_hess steps
 def get_orca_imag_modes(outfile):
     out = subprocess.run(['tac '+outfile+' | grep -m 1 -B 30 "VIBRATIONAL FREQUENCIES" | grep "imaginary mode" | awk \'{print $2}\''],shell=True,stdout=PIPE,stderr=STDOUT,universal_newlines=True)
     modelist = [float(m) for m in out.stdout.split('\n') if m]
@@ -39,15 +40,17 @@ def get_orca_imag_modes(outfile):
 def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,modeltype):
     # list of things to collect that will become dataframe column names. defining this first makes it easier to keep track of what we're collecting/organise order of df columns from the start
     # how I've organised the list: most basic/important stuff first (model/size/charge/free energies), then structural stuff (dists/rmsds/movement during opt), then individual struc energies
-    vals = ['fnum', 'ligand', 'size', 'charge', 'done', 'reactant', 'product', 'dGa', 'dGr', 
+    vals = ['fnum', 'ligand', 'size', 'charge', 'done', 'reactant', 'product', 'ts_type', 'dGa', 'dGr', 
             'ts_C1-C9_dist', 'ts_C5-O7_dist', 'r_C1-C9_dist', 'r_C5-O7_dist', 'p_C1-C9_dist', 'p_C5-O7_dist', 'r_C1-C5-O7-C9_dihedral', 'p_C5-C1-C9-O7_dihedral',
-            'rms_tmp-init_all', 'rms_tmp-init_prot', 'rms_tmp-init_wat', 'rms_guess-ts_all', 'rms_guess-ts_prot', 'rms_guess-ts_wat',
-            'rms_ts-r_all', 'rms_ts-r_prot', 'rms_ts-r_wat', 'rms_p-r_all', 'rms_p-r_prot', 'rms_p-r_wat', 'rms_ts-p_all', 'rms_ts-p_prot', 'rms_ts-p_wat',
-            'maxmove_H_tmp-init', 'maxmove_H_guess-ts', 'maxmove_H_ts-r', 'maxmove_H_ts-p', 'maxmove_H_p-r',
-            'maxmove_heavy_tmp-init', 'maxmove_heavy_guess-ts', 'maxmove_heavy_ts-r', 'maxmove_heavy_ts-p', 'maxmove_heavy_p-r',
+            'rms_tmp-init_all', 'rms_tmp-init_lig', 'rms_tmp-init_prot', 'rms_tmp-init_wat', 'rms_guess-ts_all','rms_guess-ts_lig', 'rms_guess-ts_prot', 'rms_guess-ts_wat', 'rms_r-init_all', 'rms_r-init_lig', 'rms_r-init_prot', 'rms_r-init_wat',
+            'rms_ts-r_all', 'rms_ts-r_lig', 'rms_ts-r_prot', 'rms_ts-r_wat', 'rms_p-r_all', 'rms_p-r_lig', 'rms_p-r_prot', 'rms_p-r_wat', 'rms_ts-p_all', 'rms_ts-p_lig', 'rms_ts-p_prot', 'rms_ts-p_wat',
+            'maxmove_H_tmp-init', 'maxmove_H_guess-ts', 'maxmove_H_ts-r', 'maxmove_H_ts-p', 'maxmove_H_p-r', 'maxmove_H_r-init', 
+            'maxmove_heavy_tmp-init', 'maxmove_heavy_guess-ts', 'maxmove_heavy_ts-r', 'maxmove_heavy_ts-p', 'maxmove_heavy_p-r', 'maxmove_heavy_r-init',
+            'maxmove_diff_tmp-init', 'maxmove_diff_guess-ts', 'maxmove_diff_ts-r', 'maxmove_diff_ts-p', 'maxmove_diff_p-r', 'maxmove_diff_r-init',
             'ts_path', 'ts_elE', 'ts_elE+ZPE', 'ts_thrmE', 'ts_H', 'ts_G', 'ts_Nbasis', 'ts_Nimag', 'ts_Gkcal', 'ts_imagmodes',
             'r_path', 'r_elE', 'r_elE+ZPE', 'r_thrmE', 'r_H', 'r_G', 'r_Nbasis', 'r_Nimag', 'r_Gkcal', 'r_imagmodes',
-            'p_path', 'p_elE', 'p_elE+ZPE', 'p_thrmE', 'p_H', 'p_G', 'p_Nbasis', 'p_Nimag', 'p_Gkcal', 'p_imagmodes']
+            'p_path', 'p_elE', 'p_elE+ZPE', 'p_thrmE', 'p_H', 'p_G', 'p_Nbasis', 'p_Nimag', 'p_Gkcal', 'p_imagmodes',
+            'init_elE', 'dE_r-init']
     extractvals = ['path', 'elE', 'elE+ZPE', 'thrmE', 'H', 'G', 'Nbasis', 'Nimag'] # labels for output of extract_orca.sh, match the ts/react/prod prefixed values above
     fdata = {}      # dictionary to collect all data into
     modelFGs = {}   # dictionary to collect all model contents into
@@ -83,9 +86,16 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
             templatepdb = glob.glob('../model_*_template.pdb')[0]   # redefine templatepdb relative to new current dir
             
             ### convert optimised ts/irc1/irc2 strucs back to pdb format with clear/unique names if not already done ###
-            ### also determine which irc is reactant and which is product so results can be labeled more clearly ###
+            ### also check how ts was obtained: normal/newguess/newguess-directopt ###
+            ### and determine which irc is reactant and which is product so results can be labeled more clearly ###
             if not os.path.isfile(f'{f}-{lig}{modeltype}-ts-opt.pdb'):
                 out = subprocess.run([f'xyz_to_pdb.py -pdb {templatepdb} -name {f}-{lig}{modeltype}-ts-opt.pdb'],shell=True,stdout=PIPE,stderr=STDOUT,universal_newlines=True)
+            if os.path.isdir('../original-tsguess-tsconstrained') and os.path.isdir('../original-tsguess-tsopt') and os.path.isdir('../tsopt-failed'):
+                fdata[f]['ts_type'] = 'newguess-directopt'
+            elif os.path.isdir('../original-tsguess-tsconstrained') and os.path.isdir('../original-tsguess-tsopt'):
+                fdata[f]['ts_type'] = 'newguess'
+            else:
+                fdata[f]['ts_type'] = 'normal'
             ircpdbs = glob.glob(f'irc*/{f}-{lig}{modeltype}-*-opt.pdb')
             if len(ircpdbs)==2 and len([i.split('/')[0] for i in ircpdbs if 'reactant' in i])==1 and len([i.split('/')[0] for i in ircpdbs if 'product' in i])==1:
                 fdata[f]['reactant']=[i.split('/')[0] for i in ircpdbs if 'reactant' in i][0]
@@ -142,19 +152,17 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
             fdata[f]['r_C1-C5-O7-C9_dihedral'] = str(round(cmd.get_dihedral(f'r///{ligid}/C1',f'r///{ligid}/C5',f'r///{ligid}/O7',f'r///{ligid}/C9'),2))
             fdata[f]['p_C5-C1-C9-O7_dihedral'] = str(round(cmd.get_dihedral(f'p///{ligid}/C5',f'p///{ligid}/C1',f'p///{ligid}/C9',f'p///{ligid}/O7'),2))
             # define pairs of strucs and then compare them: rmsds and the biggest difference in position ("maxmove") for any individual atom
-            for i in [('tmp','init'),('guess','ts'),('ts','r'),('p','r'),('ts','p')]:
+            for i in [('tmp','init'),('guess','ts'),('ts','r'),('p','r'),('ts','p'),('r','init')]:
                 fdata[f][f'rms_{i[0]}-{i[1]}_all'] = str(round(cmd.rms_cur(i[0],i[1]),2))
+                fdata[f][f'rms_{i[0]}-{i[1]}_lig'] = str(round(cmd.rms_cur(f'{i[0]} and resn COR', f'({i[1]} and resn COR)'),2))
                 fdata[f][f'rms_{i[0]}-{i[1]}_prot'] = str(round(cmd.rms_cur(f'{i[0]} and not resn COR and not resn WAT', f'({i[1]} and not resn COR and not resn WAT)'),2))
                 fdata[f][f'rms_{i[0]}-{i[1]}_wat'] = str(round(cmd.rms_cur(f'{i[0]} and resn WAT', f'({i[1]} and resn WAT)'),2))
                 Hdists = [cmd.get_distance(f'{i[0]}//{hydro}',f'{i[1]}//{hydro}') for hydro in allH]                
-                fdata[f][f'maxmove_H_{i[0]}-{i[1]}'] = str(round(max(Hdists),2))
                 heavydists = [cmd.get_distance(f'{i[0]}//{heavy}',f'{i[1]}//{heavy}') for heavy in allheavy]
+                fdata[f][f'maxmove_H_{i[0]}-{i[1]}'] = str(round(max(Hdists),2))
                 fdata[f][f'maxmove_heavy_{i[0]}-{i[1]}'] = str(round(max(heavydists),2))
+                fdata[f][f'maxmove_diff_{i[0]}-{i[1]}'] = str(round(max(Hdists)-max(heavydists),2))
             cmd.delete('all')   # delete all pymol objects so nothing left to potentially interfere with next iteration
-
-            ### collect TS imaginary mode. also noted in extract-orca.sh but need extra fiddly command to avoid grabbing stuff from any (re)calc_hess vib blocks before opt converged
-            #out = subprocess.run(['tac orca.out | grep -m 1 -B 30 "VIBRATIONAL FREQUENCIES" | grep " 6: " | awk \'{print $2}\''],shell=True,stdout=PIPE,stderr=STDOUT,universal_newlines=True)
-            #fdata[f]['ts_mode'] = out.stdout.strip()
 
             ### collect and process energies ###
             out = subprocess.run(['extract-orca.sh'],shell=True,stdout=PIPE,stderr=STDOUT,universal_newlines=True)
@@ -163,10 +171,11 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
             Gts = False
             Gr = False
             Gp = False
+            Ginit = False
             for line in extracted:
                 line = line.split()
                 dirsplit = [d for d in line[0].split('/') if d]
-                gkcal = float(line[5])*627.51
+                gkcal = float(line[5])*627.5096
                 if dirsplit[-1] == 'tsopt':
                     # for each value in line, get descriptor from extractvals list and use to add to data dict
                     for i,v in enumerate(line):
@@ -192,7 +201,15 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                 fdata[f]['done'] = 'Y'
             else:
                 errorlog.append(f'{f} - extract-orca.sh output not parsed as expected, please check outputs!')
-        
+            if Gr:
+                os.chdir('..')
+                out = subprocess.run(['extract-orca.sh orca.out'],shell=True,stdout=PIPE,stderr=STDOUT,universal_newlines=True)
+                extracted = [l for l in out.stdout.split('\n') if l]
+                extracted = extracted[0].split()
+                fdata[f]['init_elE'] = extracted[1]
+                diff_Ha = float(fdata[f]['r_elE']) - float(fdata[f]['init_elE'])
+                fdata[f]['dE_r-init'] = str(diff_Ha*627.5096)
+                
         os.chdir(homedir)
 
     ### make results csv ###

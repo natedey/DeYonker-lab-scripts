@@ -4,7 +4,7 @@
 # usage: cmsetup-ircs.sh [list file]
 
 if [ -z "$1" ]; then
-  1="check_tsopt_done.txt"
+  set check_tsopt_done.txt
   echo "using default list: check_tsopt_done.txt"
 elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
   echo "usage: cmsetup-ircs.sh check_tsopt_done.txt

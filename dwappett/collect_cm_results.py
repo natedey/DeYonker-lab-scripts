@@ -44,6 +44,7 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
             'ts_C1-C9_dist', 'ts_C5-O7_dist', 'r_C1-C9_dist', 'r_C5-O7_dist', 'p_C1-C9_dist', 'p_C5-O7_dist', 'r_C1-C5-O7-C9_dihedral', 'p_C5-C1-C9-O7_dihedral',
             'rms_tmp-init_all', 'rms_tmp-init_lig', 'rms_tmp-init_prot', 'rms_tmp-init_wat', 'rms_guess-ts_all','rms_guess-ts_lig', 'rms_guess-ts_prot', 'rms_guess-ts_wat', 'rms_r-init_all', 'rms_r-init_lig', 'rms_r-init_prot', 'rms_r-init_wat',
             'rms_ts-r_all', 'rms_ts-r_lig', 'rms_ts-r_prot', 'rms_ts-r_wat', 'rms_p-r_all', 'rms_p-r_lig', 'rms_p-r_prot', 'rms_p-r_wat', 'rms_ts-p_all', 'rms_ts-p_lig', 'rms_ts-p_prot', 'rms_ts-p_wat',
+            'rms_tmp-f00001tmp_all', 'rms_tmp-f00001tmp_lig', 'rms_tmp-f00001tmp_prot', 'rms_tmp-f00001tmp_wat', 'rms_init-f00001init_all', 'rms_init-f00001init_lig', 'rms_init-f00001init_prot', 'rms_init-f00001init_wat', 'rms_ts-f00001ts_all', 'rms_ts-f00001ts_lig', 'rms_ts-f00001ts_prot', 'rms_ts-f00001ts_wat', 'rms_r-f00001r_all', 'rms_r-f00001r_lig', 'rms_r-f00001r_prot', 'rms_r-f00001r_wat', 'rms_p-f00001p_all', 'rms_p-f00001p_lig', 'rms_p-f00001p_prot', 'rms_p-f00001p_wat',
             'maxmove_H_tmp-init', 'maxmove_H_guess-ts', 'maxmove_H_ts-r', 'maxmove_H_ts-p', 'maxmove_H_p-r', 'maxmove_H_r-init', 
             'maxmove_heavy_tmp-init', 'maxmove_heavy_guess-ts', 'maxmove_heavy_ts-r', 'maxmove_heavy_ts-p', 'maxmove_heavy_p-r', 'maxmove_heavy_r-init',
             'maxmove_diff_tmp-init', 'maxmove_diff_guess-ts', 'maxmove_diff_ts-r', 'maxmove_diff_ts-p', 'maxmove_diff_p-r', 'maxmove_diff_r-init',
@@ -55,6 +56,13 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
     fdata = {}      # dictionary to collect all data into
     modelFGs = {}   # dictionary to collect all model contents into
     errorlog = []   # list to collect any error messages
+
+    # load f00001 strucs as pymol objects for comparisons
+    cmd.load(glob.glob('../f00001-f00010/f00001/model_*_template.pdb')[0],'f00001tmp')
+    cmd.load('../f00001-f00010/f00001/f00001-opt.pdb','f00001init')
+    cmd.load(glob.glob('../f00001-f00010/f00001/tsopt/*-ts-opt.pdb')[0],'f00001ts')
+    cmd.load(glob.glob('../f00001-f00010/f00001/tsopt/irc*/*-reactant-opt.pdb')[0],'f00001r')
+    cmd.load(glob.glob('../f00001-f00010/f00001/tsopt/irc*/*-product-opt.pdb')[0],'f00001p')
 
     for f in framedirs:
         print(f)
@@ -119,15 +127,18 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                     fdata[f]['product'] = 'irc2'
                     os.rename(pdb1,f'irc1/{f}-{lig}{modeltype}-reactant-opt.pdb')
                     os.rename(pdb2,f'irc2/{f}-{lig}{modeltype}-product-opt.pdb')
-                    cmd.delete('all')
+                    #cmd.delete('all')
+                    for obj in [n for n in cmd.get_names("all") if 'f00001' not in n]: cmd.delete(obj)
                 elif dist_r1 > dist_p1 and dist_r2 < dist_p2:
                     fdata[f]['reactant'] = 'irc2'
                     fdata[f]['product'] = 'irc1'
                     os.rename(pdb1,f'irc1/{f}-{lig}{modeltype}-product-opt.pdb')
                     os.rename(pdb2,f'irc2/{f}-{lig}{modeltype}-reactant-opt.pdb')
-                    cmd.delete('all')
+                    #cmd.delete('all')
+                    for obj in [n for n in cmd.get_names("all") if 'f00001' not in n]: cmd.delete(obj)
                 else:
-                    cmd.delete('all')
+                    #cmd.delete('all')
+                    for obj in [n for n in cmd.get_names("all") if 'f00001' not in n]: cmd.delete(obj)
                     errorlog.append(f'{f} - ircs are not distinct as product and reactant, please check!')
                     os.chdir(homedir)
                     continue
@@ -162,7 +173,22 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                 fdata[f][f'maxmove_H_{i[0]}-{i[1]}'] = str(round(max(Hdists),2))
                 fdata[f][f'maxmove_heavy_{i[0]}-{i[1]}'] = str(round(max(heavydists),2))
                 fdata[f][f'maxmove_diff_{i[0]}-{i[1]}'] = str(round(max(Hdists)-max(heavydists),2))
-            cmd.delete('all')   # delete all pymol objects so nothing left to potentially interfere with next iteration
+            # rmsds to f00001 as well
+            for i in ['tmp','init','ts','r','p']:
+                fdata[f][f'rms_{i}-f00001{i}_all'] = str(round(cmd.rms_cur(i,f'f00001{i}'),2))
+                fdata[f][f'rms_{i}-f00001{i}_lig'] = str(round(cmd.rms_cur(f'{i} and resn COR', f'(f00001{i} and resn COR)'),2))
+                fdata[f][f'rms_{i}-f00001{i}_prot'] = str(round(cmd.rms_cur(f'{i} and not resn COR and not resn WAT', f'(f00001{i} and not resn COR and not resn WAT)'),2))
+                fdata[f][f'rms_{i}-f00001{i}_wat'] = str(round(cmd.rms_cur(f'f00001{i} and resn WAT', f'(f00001{i} and resn WAT)'),2))
+            
+            ##########################################################################################
+            ###             ADD NEW PYMOL COMMANDS (EG DISTANCES, ANGLES) HERE                     ###            
+
+
+
+            ##########################################################################################
+
+            # delete all pymol objects for this model so nothing left to potentially interfere with next iteration
+            for obj in [n for n in cmd.get_names("all") if 'f00001' not in n]: cmd.delete(obj)
 
             ### collect and process energies ###
             out = subprocess.run(['extract-orca.sh'],shell=True,stdout=PIPE,stderr=STDOUT,universal_newlines=True)

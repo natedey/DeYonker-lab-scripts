@@ -5,8 +5,8 @@
 # only sets up dirs/jobs if tsconstrained dir doesn't exist yet so stuff isn't overwritten
 
 if [ -z "$1" ]; then
-  1="check_initialopt_done.txt"
-  echo "using default list: check_initialopt_done.txt"
+  set check_initialopt_done.txt
+  echo "using default list: $1"
 elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
   echo "usage: cmsetup-tsconstrained.sh check_initialopt_done.txt
 sets up a ts guess structure and prepares an input for the constrained opt

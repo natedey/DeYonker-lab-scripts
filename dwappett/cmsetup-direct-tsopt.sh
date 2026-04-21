@@ -61,10 +61,10 @@ for i in $(awk '{print $1}' $1); do
     if grep -q "product bond" ../tsconstrained/orca.inp && grep -q "reactant bond" ../tsconstrained/orca.inp; then
       b1=$(grep "product bond" ../tsconstrained/orca.inp | sed "s/ C }/ A }/")
       b2=$(grep "reactant bond" ../tsconstrained/orca.inp | sed "s/ C }/ A }/")
-      sed -i "s/%geom/%geom\n  modify_internal\n$b1\n$b2\n  end/" orca.inp
+      sed -i "s/%geom/%geom\n  modify_internal\n$b1\n$b2\n  end\n  Calc_Hess true/" orca.inp
     else
       bonds=$(grep " { B " ../tsconstrained/orca.inp | sed "s/ C }/ A }/")
-      sed -i "s/%geom/%geom\n  modify_internal\n${bonds//$'\n'/\\n}\n  end/" orca.inp
+      sed -i "s/%geom/%geom\n  modify_internal\n${bonds//$'\n'/\\n}\n  end\n  Calc_Hess true/" orca.inp
     fi
     if [[ "$joblist" == "none" ]]; then
       joblist=$((10#${d#f}))
@@ -90,10 +90,10 @@ for i in $(awk '{print $1}' $1); do
     if grep -q "product bond" ../tsconstrained/orca.inp && grep -q "reactant bond" ../tsconstrained/orca.inp; then
       b1=$(grep "product bond" ../tsconstrained/orca.inp | sed "s/ C }/ A }/")
       b2=$(grep "reactant bond" ../tsconstrained/orca.inp | sed "s/ C }/ A }/")
-      sed -i "s/%geom/%geom\n  modify_internal\n$b1\n$b2\n  end/" orca.inp
+      sed -i "s/%geom/%geom\n  modify_internal\n$b1\n$b2\n  end\n  Calc_Hess true/" orca.inp
     else
       bonds=$(grep " { B " ../tsconstrained/orca.inp | sed "s/ C }/ A }/")
-      sed -i "s/%geom/%geom\n  modify_internal\n${bonds//$'\n'/\\n}\n  end/" orca.inp
+      sed -i "s/%geom/%geom\n  modify_internal\n${bonds//$'\n'/\\n}\n  end\n  Calc_Hess true/" orca.inp
     fi
     if [[ "$joblist" == "none" ]]; then
       joblist=$((10#${d#f}))

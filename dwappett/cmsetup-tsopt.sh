@@ -4,7 +4,7 @@
 # usage: cmsetup-tsopt.sh [list file]
 
 if [ -z "$1" ]; then
-  1="check_tsconstrained_done.txt"
+  set check_tsconstrained_done.txt
   echo "using default list: check_tsconstrained_done.txt"
 elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
   echo "usage: cmsetup-tsopt.sh check_tsconstrained_done.txt

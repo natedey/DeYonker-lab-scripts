@@ -22,6 +22,9 @@ for i in $(awk '{print $1}' check_tsopt_excluded.txt); do
   if grep -q -i "exclude" <<< $(grep $d check_tsopt_excluded.txt); then
     echo "$d - seems to be manually excluded so skipping"
     sed -i "\#$d#d" check_tsopt_excluded.txt
+  elif grep -q "Calc_Hess true" $d/tsopt/orca.inp; then
+    echo "$d - tsopt/orca.inp already has Calc_Hess true so skipping"
+    sed -i "\#$d#d" check_tsopt_excluded.txt
   else
     echo $d
     cd $d
@@ -31,7 +34,6 @@ for i in $(awk '{print $1}' check_tsopt_excluded.txt); do
     mv tsopt-failed tsopt
     cd ..
   fi
-  sleep 3
 done
 
 echo "now re-running cmsetup-direct-tsopt.sh"

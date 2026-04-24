@@ -1,7 +1,12 @@
 #!/bin/bash
 
+# DAW April 2026
+
 if [ -z "$1" ]; then
  directories="."
+elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+ echo "script counts how many tsopts done with each approach"
+ exit
 else
  directories=$(cat $1)
 fi

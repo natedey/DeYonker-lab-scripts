@@ -24,6 +24,7 @@ from subprocess import Popen, PIPE,STDOUT
 from pymol import cmd
 from read_write_pdb import read_pdb
 from model_details import get_model_FGs
+from probe2rins import atom_split
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
@@ -35,6 +36,37 @@ def get_orca_imag_modes(outfile):
     modelist = [float(m) for m in out.stdout.split('\n') if m]
     modelist.sort()
     return modelist
+
+### quick function for identifying hbonds with probe ###
+def get_probe_hbonds(pdbfile):
+    # run probe if probe file not already present
+    probefile = pdbfile.replace('.pdb','.probe')
+    if not os.path.isfile(probefile):
+        probepath = os.path.expanduser('~/git/RINRUS/bin/probe')
+        probeargs = [f'{probepath} -unformated -MC -self "all" -Quiet {pdbfile} > {probefile}']
+        out = subprocess.run(probeargs,shell=True,stdout=PIPE,stderr=STDOUT,universal_newlines=True)
+        if out.returncode == 1:
+            errorlog.append(f'error running probe for {pdbfile}')
+            return None, errorlog
+    # read in probe file, extract just hbond lines
+    lines = open(probefile,'r').readlines()
+    lines = [line.strip() for line in lines if ':hb:' in line]
+    # setting this up as a dict to keep contact count info too in case you think of a way to use that
+    hb_pairs = {}
+    for line in lines:
+        line = line.split(':')
+        at1 = atom_split(line[3])
+        at2 = atom_split(line[4])
+        # formatting atoms in pair as ch/id/atname to match pymol selection macro so it'll be super easy to get their distances if you want them 
+        if int(at1[1]) < int(at2[1]):
+            ordered_pair = (f'{at1[0]}/{at1[1]}/{at1[3]}',f'{at2[0]}/{at2[1]}/{at2[3]}')
+        else:
+            ordered_pair = (f'{at2[0]}/{at2[1]}/{at2[3]}',f'{at1[0]}/{at1[1]}/{at1[3]}')
+        if ordered_pair not in hb_pairs.keys():
+            hb_pairs[ordered_pair] = 1
+        else:
+            hb_pairs[ordered_pair] += 1
+    return hb_pairs
 
 ### main results processing function ###
 def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,modeltype):
@@ -48,6 +80,7 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
             'maxmove_H_tmp-init', 'maxmove_H_guess-ts', 'maxmove_H_ts-r', 'maxmove_H_ts-p', 'maxmove_H_p-r', 'maxmove_H_r-init', 
             'maxmove_heavy_tmp-init', 'maxmove_heavy_guess-ts', 'maxmove_heavy_ts-r', 'maxmove_heavy_ts-p', 'maxmove_heavy_p-r', 'maxmove_heavy_r-init',
             'maxmove_diff_tmp-init', 'maxmove_diff_guess-ts', 'maxmove_diff_ts-r', 'maxmove_diff_ts-p', 'maxmove_diff_p-r', 'maxmove_diff_r-init',
+            'Nhb_ts_all', 'Nhb_ts_lig', 'Nhb_r_all', 'Nhb_r_lig', 'Nhb_p_all', 'Nhb_p_lig', 'hb_HO5_ts_fg', 'hb_HO5_ts_dist', 'hb_HO5_r_fg', 'hb_HO5_r_dist', 'hb_HO5_p_fg', 'hb_HO5_p_dist',
             'ts_path', 'ts_elE', 'ts_elE+ZPE', 'ts_thrmE', 'ts_H', 'ts_G', 'ts_Nbasis', 'ts_Nimag', 'ts_Gkcal', 'ts_imagmodes',
             'r_path', 'r_elE', 'r_elE+ZPE', 'r_thrmE', 'r_H', 'r_G', 'r_Nbasis', 'r_Nimag', 'r_Gkcal', 'r_imagmodes',
             'p_path', 'p_elE', 'p_elE+ZPE', 'p_thrmE', 'p_H', 'p_G', 'p_Nbasis', 'p_Nimag', 'p_Gkcal', 'p_imagmodes',
@@ -58,11 +91,12 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
     errorlog = []   # list to collect any error messages
 
     # load f00001 strucs as pymol objects for comparisons
-    cmd.load(glob.glob('../f00001-f00010/f00001/model_*_template.pdb')[0],'f00001tmp')
-    cmd.load('../f00001-f00010/f00001/f00001-opt.pdb','f00001init')
-    cmd.load(glob.glob('../f00001-f00010/f00001/tsopt/*-ts-opt.pdb')[0],'f00001ts')
-    cmd.load(glob.glob('../f00001-f00010/f00001/tsopt/irc*/*-reactant-opt.pdb')[0],'f00001r')
-    cmd.load(glob.glob('../f00001-f00010/f00001/tsopt/irc*/*-product-opt.pdb')[0],'f00001p')
+    if modeltype == '':
+        cmd.load(glob.glob('../f00001-f00010/f00001/model_*_template.pdb')[0],'f00001tmp')
+        cmd.load('../f00001-f00010/f00001/f00001-opt.pdb','f00001init')
+        cmd.load(glob.glob('../f00001-f00010/f00001/tsopt/*-ts-opt.pdb')[0],'f00001ts')
+        cmd.load(glob.glob('../f00001-f00010/f00001/tsopt/irc*/*-reactant-opt.pdb')[0],'f00001r')
+        cmd.load(glob.glob('../f00001-f00010/f00001/tsopt/irc*/*-product-opt.pdb')[0],'f00001p')
 
     for f in framedirs:
         print(f)
@@ -174,14 +208,36 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                 fdata[f][f'maxmove_heavy_{i[0]}-{i[1]}'] = str(round(max(heavydists),2))
                 fdata[f][f'maxmove_diff_{i[0]}-{i[1]}'] = str(round(max(Hdists)-max(heavydists),2))
             # rmsds to f00001 as well
-            for i in ['tmp','init','ts','r','p']:
-                fdata[f][f'rms_{i}-f00001{i}_all'] = str(round(cmd.rms_cur(i,f'f00001{i}'),2))
-                fdata[f][f'rms_{i}-f00001{i}_lig'] = str(round(cmd.rms_cur(f'{i} and resn COR', f'(f00001{i} and resn COR)'),2))
-                fdata[f][f'rms_{i}-f00001{i}_prot'] = str(round(cmd.rms_cur(f'{i} and not resn COR and not resn WAT', f'(f00001{i} and not resn COR and not resn WAT)'),2))
-                fdata[f][f'rms_{i}-f00001{i}_wat'] = str(round(cmd.rms_cur(f'f00001{i} and resn WAT', f'(f00001{i} and resn WAT)'),2))
+            if modeltype == '':
+                for i in ['tmp','init','ts','r','p']:
+                    fdata[f][f'rms_{i}-f00001{i}_all'] = str(round(cmd.rms_cur(i,f'f00001{i}'),2))
+                    fdata[f][f'rms_{i}-f00001{i}_lig'] = str(round(cmd.rms_cur(f'{i} and resn COR', f'(f00001{i} and resn COR)'),2))
+                    fdata[f][f'rms_{i}-f00001{i}_prot'] = str(round(cmd.rms_cur(f'{i} and not resn COR and not resn WAT', f'(f00001{i} and not resn COR and not resn WAT)'),2))
+                    fdata[f][f'rms_{i}-f00001{i}_wat'] = str(round(cmd.rms_cur(f'f00001{i} and resn WAT', f'(f00001{i} and resn WAT)'),2))
             
+            # get hbonds from probe
+            hbpairs = {}
+            hbpairs['ts'] = get_probe_hbonds(f'{f}-{lig}{modeltype}-ts-opt.pdb')
+            hbpairs['r'] = get_probe_hbonds(f'{fdata[f]["reactant"]}/{f}-{lig}{modeltype}-reactant-opt.pdb')
+            hbpairs['p'] = get_probe_hbonds(f'{fdata[f]["product"]}/{f}-{lig}{modeltype}-product-opt.pdb')
+            for i in ['ts','r','p']:
+                if hbpairs[i]:
+                    fdata[f][f'Nhb_{i}_all'] = len(hbpairs[i].keys())
+                    fdata[f][f'Nhb_{i}_lig'] = len([p for p in hbpairs[i].keys() if ligid in p[0] or ligid in p[1]])
+
             ##########################################################################################
-            ###             ADD NEW PYMOL COMMANDS (EG DISTANCES, ANGLES) HERE                     ###            
+            ###                   ADD NEW COMMANDS (EG DISTANCES, ANGLES) HERE                     ###            
+
+            # example of how you can use the probe hbonds lists: seeing where ligand HO5 is pointing/dist of that hbond
+            # to see what the steps are doing, run my test script here:     /project/dwappett/chorismate_mutase/QM-batch-models/A128-every-100th/f00200/tsopt/test-hbond-analysis.py
+            for i in ['ts','r','p']:
+                if hbpairs[i]:
+                    HO5_hb = [p for p in hbpairs[i].keys() if f'{ligid}/HO5' in p[0] or f'{ligid}/HO5' in p[1]]
+                    # if there is h-bond involving HO5 identified, get the other element of the pair and then distance between the atoms
+                    if HO5_hb: 
+                        other_atom = [at for at in HO5_hb[0] if ligid not in at][0]
+                        fdata[f][f'hb_HO5_{i}_fg'] = other_atom
+                        fdata[f][f'hb_HO5_{i}_dist'] = str(round(cmd.get_distance(f'{i}///{ligid}/HO5', f'{i}//{other_atom}'),2))
 
 
 

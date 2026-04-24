@@ -1,4 +1,10 @@
 #!/bin/bash
+# DAW december 2025 or jan 2026
+# replaced by check_cm_jobs.sh!
+
+echo "this script has been replaced by check_cm_jobs.sh!"
+exit
+
 
 SECONDS=0
 

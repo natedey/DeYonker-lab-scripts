@@ -14,7 +14,7 @@
 ################################################################
 checkdirstate () {
   # grep orca.out once for all the calc type/termination/success/error/settings keywords that this function checks, for efficiency
-  keywords=$(grep -e "Geometry Optimization Run" -e "Energy+Gradient Calculation" -e "ORCA TERMINATED NORMALLY" -e "THE OPTIMIZATION HAS CONVERGED" -e "The optimization did not converge" -e "Geometry optimization failed" -e "Recalc_Hess" -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_" -e "Numerical calculation ISN'T COMPLETE" -e "VIBRATIONAL FREQUENCIES" -e "tightopt" -e "modify_internal" $1/orca.out)
+  keywords=$(grep -e "Geometry Optimization Run" -e "Energy+Gradient Calculation" -e "ORCA TERMINATED NORMALLY" -e "THE OPTIMIZATION HAS CONVERGED" -e "The optimization did not converge" -e "Geometry optimization failed" -e "Recalc_Hess" -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_" -e "the SCF has not converged. There may be a way out but we have to stop here" -e "Numerical calculation ISN'T COMPLETE" -e "VIBRATIONAL FREQUENCIES" -e "tightopt" -e "modify_internal" $1/orca.out)
 
   ### all job types: assign initial state ###
   # first check for manual override. if file contains word "exclude", then model will go into excluded list, otherwise it'll go into check_manually
@@ -56,6 +56,9 @@ checkdirstate () {
      elif grep -q "Recalc_Hess 100" <<< $keywords; then 
        # geom opt + not terminated normally + recalc_hess 100 = check_manually
        echo "$1 - opt didn't finish with Recalc_Hess 100" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
+     elif grep -q "the SCF has not converged. There may be a way out but we have to stop here" <<< $keywords; then
+       # geom opt + not terminated normally + SCF not converged = check_manually
+       echo "$1 - SCF convergence problem, check geometry" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
      elif grep -q -e "ORCA finished by error termination" -e "Calling Command" -e "borting the run" -e "\[file orca_" <<< $keywords; then 
        # geom opt + not terminated normally + error message = orcaerror
        echo $1 >> check_${2}_orcaerror.txt; state="orcaerror"
@@ -92,6 +95,18 @@ checkdirstate () {
   else 
     # no "Geometry Optimization Run" or "Energy+Gradient Calculation" keyword = check_manually
     echo "$1 - orca.out does not seem to be a geometry optimization or frequency calculation" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
+  fi
+
+  ### all job types: check how many times orcaerror jobs have been tried and reassign state if needed ###
+  if [[ "$state" == "orcaerror" ]]; then
+   Nsavedout=$(ls $1/*-out 2>/dev/null | grep -v -e slurm -e rinrus | wc -l)
+   Nslurm=$(ls $1/slurm-*.err | wc -l)
+   Norcaerror=$(( Nslurm - Nsavedout ))
+   # if we've hit third attempt at restarting orcaerror and still no success, move into check_manually bc this is probably a real error
+   if [ $Norcaerror -ge 3 ]; then
+    sed -i "\#$1#d" check_${2}_$state.txt
+    echo "$1 - hit orcaerror 3+ times, check inp and geometry" >> check_${2}_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
+   fi
   fi
 
   ### tsopt/irc1/irc2 only: check imaginary modes and reassign state if needed ###

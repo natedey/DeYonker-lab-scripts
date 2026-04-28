@@ -76,10 +76,10 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
             'ts_C1-C9_dist', 'ts_C5-O7_dist', 'r_C1-C9_dist', 'r_C5-O7_dist', 'p_C1-C9_dist', 'p_C5-O7_dist', 'r_C1-C5-O7-C9_dihedral', 'p_C5-C1-C9-O7_dihedral',
             'rms_tmp-init_all', 'rms_tmp-init_lig', 'rms_tmp-init_prot', 'rms_tmp-init_wat', 'rms_guess-ts_all','rms_guess-ts_lig', 'rms_guess-ts_prot', 'rms_guess-ts_wat', 'rms_r-init_all', 'rms_r-init_lig', 'rms_r-init_prot', 'rms_r-init_wat',
             'rms_ts-r_all', 'rms_ts-r_lig', 'rms_ts-r_prot', 'rms_ts-r_wat', 'rms_p-r_all', 'rms_p-r_lig', 'rms_p-r_prot', 'rms_p-r_wat', 'rms_ts-p_all', 'rms_ts-p_lig', 'rms_ts-p_prot', 'rms_ts-p_wat',
-            'rms_tmp-f00001tmp_all', 'rms_tmp-f00001tmp_lig', 'rms_tmp-f00001tmp_prot', 'rms_tmp-f00001tmp_wat', 'rms_init-f00001init_all', 'rms_init-f00001init_lig', 'rms_init-f00001init_prot', 'rms_init-f00001init_wat', 'rms_ts-f00001ts_all', 'rms_ts-f00001ts_lig', 'rms_ts-f00001ts_prot', 'rms_ts-f00001ts_wat', 'rms_r-f00001r_all', 'rms_r-f00001r_lig', 'rms_r-f00001r_prot', 'rms_r-f00001r_wat', 'rms_p-f00001p_all', 'rms_p-f00001p_lig', 'rms_p-f00001p_prot', 'rms_p-f00001p_wat',
+            'rms_tmp-f00001tmp_all', 'rms_tmp-f00001tmp_SC', 'rms_tmp-f00001tmp_MC', 'rms_init-f00001init_all', 'rms_init-f00001init_SC', 'rms_init-f00001init_MC', 'rms_ts-f00001ts_all', 'rms_ts-f00001ts_SC', 'rms_ts-f00001ts_MC', 'rms_r-f00001r_all', 'rms_r-f00001r_SC', 'rms_r-f00001r_MC', 'rms_p-f00001p_all', 'rms_p-f00001p_SC', 'rms_p-f00001p_MC',
             'maxmove_H_tmp-init', 'maxmove_H_guess-ts', 'maxmove_H_ts-r', 'maxmove_H_ts-p', 'maxmove_H_p-r', 'maxmove_H_r-init', 
             'maxmove_heavy_tmp-init', 'maxmove_heavy_guess-ts', 'maxmove_heavy_ts-r', 'maxmove_heavy_ts-p', 'maxmove_heavy_p-r', 'maxmove_heavy_r-init',
-            'maxmove_diff_tmp-init', 'maxmove_diff_guess-ts', 'maxmove_diff_ts-r', 'maxmove_diff_ts-p', 'maxmove_diff_p-r', 'maxmove_diff_r-init',
+            'maxmove_diff_tmp-init', 'maxmove_diff_guess-ts', 'maxmove_diff_ts-r', 'maxmove_diff_ts-p', 'maxmove_diff_p-r', 'maxmove_diff_r-init', 'Hdetached',
             'Nhb_ts_all', 'Nhb_ts_lig', 'Nhb_r_all', 'Nhb_r_lig', 'Nhb_p_all', 'Nhb_p_lig', 'hb_HO5_ts_fg', 'hb_HO5_ts_dist', 'hb_HO5_r_fg', 'hb_HO5_r_dist', 'hb_HO5_p_fg', 'hb_HO5_p_dist',
             'ts_path', 'ts_elE', 'ts_elE+ZPE', 'ts_thrmE', 'ts_H', 'ts_G', 'ts_Nbasis', 'ts_Nimag', 'ts_Gkcal', 'ts_imagmodes',
             'r_path', 'r_elE', 'r_elE+ZPE', 'r_thrmE', 'r_H', 'r_G', 'r_Nbasis', 'r_Nimag', 'r_Gkcal', 'r_imagmodes',
@@ -90,7 +90,7 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
     modelFGs = {}   # dictionary to collect all model contents into
     errorlog = []   # list to collect any error messages
 
-    # load f00001 strucs as pymol objects for comparisons
+    # load f00001 strucs as pymol objects for comparisons. DAW needs to figure out how to make this work for the individual models in her own dirs...
     if modeltype == '':
         cmd.load(glob.glob('../f00001-f00010/f00001/model_*_template.pdb')[0],'f00001tmp')
         cmd.load('../f00001-f00010/f00001/f00001-opt.pdb','f00001init')
@@ -207,13 +207,27 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                 fdata[f][f'maxmove_H_{i[0]}-{i[1]}'] = str(round(max(Hdists),2))
                 fdata[f][f'maxmove_heavy_{i[0]}-{i[1]}'] = str(round(max(heavydists),2))
                 fdata[f][f'maxmove_diff_{i[0]}-{i[1]}'] = str(round(max(Hdists)-max(heavydists),2))
+            # find closest heavy atom to each H in template pdb (= what each H should be covalently bound to)
+            H_bound_tmp = {}
+            for i in allH:
+                res_heavy = [j for j in allheavy if i.rsplit('/',1)[0] in j]
+                heavydists_tmp = {j: cmd.get_distance(f'tmp//{i}',f'tmp//{j}') for j in res_heavy}
+                H_bound_tmp[(i,min(heavydists_tmp,key=heavydists_tmp.get))] = heavydists_tmp[min(heavydists_tmp,key=heavydists_tmp.get)]
+            for struc in ['init','ts','r','p']:
+                for pair in H_bound_tmp.keys():
+                    # flag if distance of atom pair that should be bound is > 1.1 of original dist (so I don't have to account for H-C/N/O/S lengths being different) 
+                    if cmd.get_distance(f'{struc}//{pair[0]}',f'{struc}//{pair[1]}') > (H_bound_tmp[pair] * 1.1):
+                        fdata[f]['Hdetached'] = struc
+                        # don't need to keep looping once first bad struc found !
+                        break
+                     
             # rmsds to f00001 as well
             if modeltype == '':
+                MC_atom_names = '(name C or name CA or name N or name O or name H)'
                 for i in ['tmp','init','ts','r','p']:
                     fdata[f][f'rms_{i}-f00001{i}_all'] = str(round(cmd.rms_cur(i,f'f00001{i}'),2))
-                    fdata[f][f'rms_{i}-f00001{i}_lig'] = str(round(cmd.rms_cur(f'{i} and resn COR', f'(f00001{i} and resn COR)'),2))
-                    fdata[f][f'rms_{i}-f00001{i}_prot'] = str(round(cmd.rms_cur(f'{i} and not resn COR and not resn WAT', f'(f00001{i} and not resn COR and not resn WAT)'),2))
-                    fdata[f][f'rms_{i}-f00001{i}_wat'] = str(round(cmd.rms_cur(f'f00001{i} and resn WAT', f'(f00001{i} and resn WAT)'),2))
+                    fdata[f][f'rms_{i}-f00001{i}_SC'] = str(round(cmd.rms_cur(f'{i} and not resn COR and not resn WAT and not {MC_atom_names}', f'(f00001{i} and not resn COR and not resn WAT and not {MC_atom_names})'),2))
+                    fdata[f][f'rms_{i}-f00001{i}_MC'] = str(round(cmd.rms_cur(f'{i} and not resn COR and not resn WAT and {MC_atom_names}', f'(f00001{i} and not resn COR and not resn WAT and {MC_atom_names})'),2))
             
             # get hbonds from probe
             hbpairs = {}

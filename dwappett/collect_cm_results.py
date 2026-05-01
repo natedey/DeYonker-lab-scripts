@@ -81,6 +81,7 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
             'maxmove_heavy_tmp-init', 'maxmove_heavy_guess-ts', 'maxmove_heavy_ts-r', 'maxmove_heavy_ts-p', 'maxmove_heavy_p-r', 'maxmove_heavy_r-init',
             'maxmove_diff_tmp-init', 'maxmove_diff_guess-ts', 'maxmove_diff_ts-r', 'maxmove_diff_ts-p', 'maxmove_diff_p-r', 'maxmove_diff_r-init', 'Hdetached',
             'Nhb_ts_all', 'Nhb_ts_lig', 'Nhb_r_all', 'Nhb_r_lig', 'Nhb_p_all', 'Nhb_p_lig', 'hb_HO5_ts_fg', 'hb_HO5_ts_dist', 'hb_HO5_r_fg', 'hb_HO5_r_dist', 'hb_HO5_p_fg', 'hb_HO5_p_dist',
+            'hb_ts_lig-Arg63', 'hb_r_lig-Arg63', 'hb_p_lig-Arg63', 'hb_ts_lig-Arg7', 'hb_r_lig-Arg7', 'hb_p_lig-Arg7',
             'ts_path', 'ts_elE', 'ts_elE+ZPE', 'ts_thrmE', 'ts_H', 'ts_G', 'ts_Nbasis', 'ts_Nimag', 'ts_Gkcal', 'ts_imagmodes',
             'r_path', 'r_elE', 'r_elE+ZPE', 'r_thrmE', 'r_H', 'r_G', 'r_Nbasis', 'r_Nimag', 'r_Gkcal', 'r_imagmodes',
             'p_path', 'p_elE', 'p_elE+ZPE', 'p_thrmE', 'p_H', 'p_G', 'p_Nbasis', 'p_Nimag', 'p_Gkcal', 'p_imagmodes',
@@ -207,19 +208,22 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                 fdata[f][f'maxmove_H_{i[0]}-{i[1]}'] = str(round(max(Hdists),2))
                 fdata[f][f'maxmove_heavy_{i[0]}-{i[1]}'] = str(round(max(heavydists),2))
                 fdata[f][f'maxmove_diff_{i[0]}-{i[1]}'] = str(round(max(Hdists)-max(heavydists),2))
-            # find closest heavy atom to each H in template pdb (= what each H should be covalently bound to)
+            # find what each H in template pdb is covalently bound to (= closest heavy atom with same residue id)
             H_bound_tmp = {}
             for i in allH:
                 res_heavy = [j for j in allheavy if i.rsplit('/',1)[0] in j]
                 heavydists_tmp = {j: cmd.get_distance(f'tmp//{i}',f'tmp//{j}') for j in res_heavy}
                 H_bound_tmp[(i,min(heavydists_tmp,key=heavydists_tmp.get))] = heavydists_tmp[min(heavydists_tmp,key=heavydists_tmp.get)]
             for struc in ['init','ts','r','p']:
+                # check if any of the pairs that should be bound have distance > 1.1 * original dist (just allowing for slight variations between amberff and xtb)
+                # when an unbound pair is found, log the struc and move to the next one (don't need to waste time checking rest of pairs)
                 for pair in H_bound_tmp.keys():
-                    # flag if distance of atom pair that should be bound is > 1.1 of original dist (so I don't have to account for H-C/N/O/S lengths being different) 
                     if cmd.get_distance(f'{struc}//{pair[0]}',f'{struc}//{pair[1]}') > (H_bound_tmp[pair] * 1.1):
-                        fdata[f]['Hdetached'] = struc
-                        # don't need to keep looping once first bad struc found !
-                        break
+                        if fdata[f]['Hdetached'] == '':
+                            fdata[f]['Hdetached'] = struc
+                        else:
+                            fdata[f]['Hdetached'] = fdata[f]['Hdetached']+','+struc
+                        break 
                      
             # rmsds to f00001 as well
             if modeltype == '':
@@ -229,7 +233,8 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                     fdata[f][f'rms_{i}-f00001{i}_SC'] = str(round(cmd.rms_cur(f'{i} and not resn COR and not resn WAT and not {MC_atom_names}', f'(f00001{i} and not resn COR and not resn WAT and not {MC_atom_names})'),2))
                     fdata[f][f'rms_{i}-f00001{i}_MC'] = str(round(cmd.rms_cur(f'{i} and not resn COR and not resn WAT and {MC_atom_names}', f'(f00001{i} and not resn COR and not resn WAT and {MC_atom_names})'),2))
             
-            # get hbonds from probe
+            # get hbonds from probe and count
+            # to see what the steps are doing, run my test script here:     /project/dwappett/chorismate_mutase/QM-batch-models/A128-every-100th/test-hbond-analysis.py
             hbpairs = {}
             hbpairs['ts'] = get_probe_hbonds(f'{f}-{lig}{modeltype}-ts-opt.pdb')
             hbpairs['r'] = get_probe_hbonds(f'{fdata[f]["reactant"]}/{f}-{lig}{modeltype}-reactant-opt.pdb')
@@ -242,18 +247,42 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
             ##########################################################################################
             ###                   ADD NEW COMMANDS (EG DISTANCES, ANGLES) HERE                     ###            
 
-            # example of how you can use the probe hbonds lists: seeing where ligand HO5 is pointing/dist of that hbond
-            # to see what the steps are doing, run my test script here:     /project/dwappett/chorismate_mutase/QM-batch-models/A128-every-100th/f00200/tsopt/test-hbond-analysis.py
+            # look for specific hbonds in the probe hbonds lists for each structure
             for i in ['ts','r','p']:
                 if hbpairs[i]:
+                    # seeing where ligand HO5 is pointing/getting distance of h-bond if there is one
                     HO5_hb = [p for p in hbpairs[i].keys() if f'{ligid}/HO5' in p[0] or f'{ligid}/HO5' in p[1]]
                     # if there is h-bond involving HO5 identified, get the other element of the pair and then distance between the atoms
                     if HO5_hb: 
                         other_atom = [at for at in HO5_hb[0] if ligid not in at][0]
                         fdata[f][f'hb_HO5_{i}_fg'] = other_atom
                         fdata[f][f'hb_HO5_{i}_dist'] = str(round(cmd.get_distance(f'{i}///{ligid}/HO5', f'{i}//{other_atom}'),2))
+                    else: #specifically label if no h-bond so that can be seen in plots (empty values/nans get ignored)
+                        fdata[f][f'hb_HO5_{i}_fg'] = 'none'
+
+                    # DAW demonstrated in group meeting April 30th: check hbonds between ligand and Arg63
+                    # first need to determine what the correct ch/id label is depending on the ligand
+                    if ligid == '128': arg = 'C/319'
+                    elif ligid == '256': arg = 'A/63'
+                    elif ligid == '384': arg = 'B/191'
+                    # get all probe h-bonds between arg and ligand
+                    argpairs = [p for p in hbpairs[i].keys() if (arg in p[0] and ligid in p[1]) or (arg in p[1] and ligid in p[0])]
+                    # log number of arg-lig h-bonds; if 2 h-bonds then also note if both to same O or one to each O
+                    if len(argpairs) == 2:
+                        ligatom0 = [atom for atom in argpairs[0] if ligid in atom]
+                        ligatom1 = [atom for atom in argpairs[1] if ligid in atom]
+                        if ligatom0 == ligatom1:
+                            fdata[f][f'hb_{i}_lig-Arg63'] = '2hb-sameO'
+                        else:
+                            fdata[f][f'hb_{i}_lig-Arg63'] = '2hb-diffO'
+                    else:
+                        fdata[f][f'hb_{i}_lig-Arg63'] = f'{len(argpairs)}hb'
+
+                    # Duplicate section above but for Arg7, col names already added into vars list at top for you
+                    #if ligid == '128': arg = 'A/7'
 
 
+ 
 
             ##########################################################################################
 
@@ -292,8 +321,8 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                     Gp = gkcal
                     fdata[f]['p_imagmodes'] = get_orca_imag_modes(dirsplit[-1]+'/orca.out')
             if Gts and Gr and Gp:   # second part of failsafe: only calculate deltaGs if all G values collected properly (no False placeholders left)
-                fdata[f]['dGa'] = str(Gts - Gr)
-                fdata[f]['dGr'] = str(Gp - Gr)
+                fdata[f]['dGa'] = str(round(Gts - Gr,2))
+                fdata[f]['dGr'] = str(round(Gp - Gr,2))
                 fdata[f]['done'] = 'Y'
             else:
                 errorlog.append(f'{f} - extract-orca.sh output not parsed as expected, please check outputs!')
@@ -304,7 +333,7 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                 extracted = extracted[0].split()
                 fdata[f]['init_elE'] = extracted[1]
                 diff_Ha = float(fdata[f]['r_elE']) - float(fdata[f]['init_elE'])
-                fdata[f]['dE_r-init'] = str(diff_Ha*627.5096)
+                fdata[f]['dE_r-init'] = str(round(diff_Ha*627.5096,2))
                 
         os.chdir(homedir)
 
@@ -316,6 +345,7 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
 
     ### make FG csv ###
     df2 = pd.DataFrame.from_dict(modelFGs,orient='index')
+    df2 = df2.fillna(0).astype(int)
     df2.to_csv(f'{dirlabel}_model_FGs.csv',index_label='frame')
 
     ### make error log file if any errors ###

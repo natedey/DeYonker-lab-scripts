@@ -53,7 +53,7 @@ for i in $(cat $1); do
   cd $wkdr
 done
 
-cp ~/git/DeYonker-lab-scripts/dwappett/1-array-tsopt 1-array-tsopt
+cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array-tsopt 1-array-tsopt
 sed -i "s/ASTART-AEND\%1/${joblist}%4/" 1-array-tsopt
 echo ""
 echo "created 1-array-tsopt"

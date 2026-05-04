@@ -36,7 +36,8 @@ def makeguesspdb(modelpdb,newpdb,lig):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Create tsguess.pdb for chorismate mutase models. Aligns old TS geom to model PDB ligand and then replaces it.")
     parser.add_argument("-modpdb")
-    parser.add_argument("-tspdb",default='/project/dwappett/chorismate_mutase/opts-expanded-models/res_13-ts-new-02-out.pdb')
+    #parser.add_argument("-tspdb",default='/project/dwappett/chorismate_mutase/opts-expanded-models/res_13-ts-new-02-out.pdb')
+    parser.add_argument("-tspdb",default='~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/res_13-ts-new-02-out.pdb')
     parser.add_argument("-newpdb",default='old_TS_aligned.pdb')
     parser.add_argument("-md",action='store_true')
     args = parser.parse_args()

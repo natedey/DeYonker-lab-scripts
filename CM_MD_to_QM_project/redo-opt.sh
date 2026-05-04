@@ -100,15 +100,15 @@ done
 
 cd $wkdr
 if [[ "$calctype" == "initialopt" ]]; then
-  cp ~/git/DeYonker-lab-scripts/dwappett/1-array 1-array-redo-initialopt-$redotype
+  cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array 1-array-redo-initialopt-$redotype
   sed -i "s/job-name=ORCAJOB/job-name=ORCA-initialopt/" 1-array-redo-initialopt-$redotype
   jobfile="1-array-redo-initialopt-$redotype"
 elif [[ "$calctype" == "irc2" ]]; then
-  cp ~/git/DeYonker-lab-scripts/dwappett/1-array-irc1 1-array-redo-irc2-$redotype
+  cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array-irc1 1-array-redo-irc2-$redotype
   sed -i "s/irc1/irc2/" 1-array-redo-irc2-$redotype
   jobfile="1-array-redo-irc2-$redotype"
 else
-  cp ~/git/DeYonker-lab-scripts/dwappett/1-array-$calctype 1-array-redo-$calctype-$redotype
+  cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array-$calctype 1-array-redo-$calctype-$redotype
   jobfile="1-array-redo-$calctype-$redotype"
 fi
 sed -i "s/ASTART-AEND\%1/${joblist}%1/" $jobfile

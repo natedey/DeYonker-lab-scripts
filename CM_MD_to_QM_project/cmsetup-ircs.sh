@@ -42,10 +42,10 @@ for i in $(cat $1); do
   cd $wkdr
 done
 
-cp ~/git/DeYonker-lab-scripts/dwappett/1-array-irc1 1-array-irc1
+cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array-irc1 1-array-irc1
 sed -i "s/ASTART-AEND\%1/${joblist}%4/" 1-array-irc1
 
-cp ~/git/DeYonker-lab-scripts/dwappett/1-array-irc1 1-array-irc2
+cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array-irc1 1-array-irc2
 sed -i "s/ASTART-AEND\%1/${joblist}%4/; s/irc1/irc2/" 1-array-irc2
 
 echo ""

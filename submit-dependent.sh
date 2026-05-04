@@ -1,5 +1,6 @@
 #!/bin/bash
 # DAW script for submitting jobs to run sequentially with dependencies
+# created Feb 2026
 
 if [ -z $1 ]; then
  echo "please specify dirs!"
@@ -9,7 +10,11 @@ elif [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
 this script submits the 1 files in the given dirs with job dependencies
 so that each one can't start until the previous one has finished
 as an alternative to setting up a slurm array with arraytaskthrottle=1"
-exit
+ exit
+elif [ -f $1 ]; then
+ echo "script takes folder names directly but a file has been given"
+ echo "please run as:  submit-dependent.sh \$(cat $1)"
+ exit
 fi
 
 wkdr=$(pwd)

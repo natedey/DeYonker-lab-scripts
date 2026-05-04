@@ -5,6 +5,7 @@
 #SBATCH --partition=acomputeq
 #SBATCH --array=SETARRAY
 
+source ~/.bash_profile
 source ~/.bashrc
 conda activate rinrus
 

@@ -45,7 +45,7 @@ for i in $(cat $1); do
   cd $wkdr
 done
 
-cp ~/git/DeYonker-lab-scripts/dwappett/1-array-tsconstrained 1-array-tsconstrained
+cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array-tsconstrained 1-array-tsconstrained
 sed -i "s/ASTART-AEND\%1/${joblist}%4/" 1-array-tsconstrained
 
 echo ""

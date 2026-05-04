@@ -5,6 +5,7 @@
 #SBATCH --partition=acomputeq
 #SBATCH --output=collected.out
 
+source ~/.bash_profile
 source ~/.bashrc
 conda activate rinrus
 
@@ -18,6 +19,6 @@ for i in $(cat to-collect.txt); do
   collect_cm_results.py -dir $i
 done
 
-# resubmit this to run again next Friday
+# resubmit this to run again next Saturday
 nextrun=$(date -d 'next Saturday' '+%Y-%m-%d')
 sbatch --begin=${nextrun} 1-collectresults

@@ -111,7 +111,7 @@ for i in $(awk '{print $1}' $1); do
   fi
 done
 
-cp ~/git/DeYonker-lab-scripts/dwappett/1-array-tsopt 1-array-direct-tsopt
+cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array-tsopt 1-array-direct-tsopt
 sed -i "s/ASTART-AEND\%1/${joblist}%4/" 1-array-direct-tsopt
 echo ""
 echo "created 1-array-direct-tsopt"

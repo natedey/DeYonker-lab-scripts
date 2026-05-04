@@ -202,7 +202,7 @@ elif [[ "$1" == "dir" ]] || [[ "$1" == "-dir" ]]; then
  echo "checking directory $2"
 elif [[ "$1" == "asarray" ]]; then
  ndir=$(cat $2 | wc -l)
- cp ~/git/DeYonker-lab-scripts/dwappett/1-checkjobs .
+ cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-checkjobs .
  sed -i "s/SETARRAY/1-$ndir/; s/SETLISTFILE/$2/" 1-checkjobs
  #sbatch 1-checkjobs
  exit

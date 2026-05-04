@@ -5,6 +5,7 @@
 #SBATCH --partition=acomputeq
 #SBATCH --output=compressed.out
 
+source ~/.bash_profile
 source ~/.bashrc
 conda activate rinrus
 qmdir=$(pwd)

@@ -53,15 +53,15 @@ done
 
 cd $wkdr
 if [[ "$calctype" == "initialopt" ]]; then
-  cp ~/git/DeYonker-lab-scripts/dwappett/1-array 1-array-initialopt-restart
+  cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array 1-array-initialopt-restart
   sed -i "s/job-name=ORCAJOB/job-name=ORCA-initialopt/" 1-array-initialopt-restart
   jobfile="1-array-initialopt-restart"
 elif [[ "$calctype" == "irc2" ]]; then
-  cp ~/git/DeYonker-lab-scripts/dwappett/1-array-irc1 1-array-irc2-restart
+  cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array-irc1 1-array-irc2-restart
   sed -i "s/irc1/irc2/" 1-array-irc2-restart
   jobfile="1-array-irc2-restart"
 else
-  cp ~/git/DeYonker-lab-scripts/dwappett/1-array-$calctype 1-array-$calctype-restart
+  cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array-$calctype 1-array-$calctype-restart
   jobfile="1-array-$calctype-restart"
 fi
   

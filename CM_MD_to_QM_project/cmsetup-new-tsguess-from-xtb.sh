@@ -45,13 +45,13 @@ fi
 
 ### get old ts to fit in to make guess ###
 if grep -q "QM-A" <<< $(pwd) || grep -q "A128" <<< $(pwd); then
-  tsforfitting='~/git/DeYonker-lab-scripts/dwappett/f00001-A128-ts-opt.pdb'
+  tsforfitting='~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/f00001-A128-ts-opt.pdb'
   tslabel='f00001-A128'
 elif grep -q "QM-B" <<< $(pwd) || grep -q "B256" <<< $(pwd); then
-  tsforfitting='~/git/DeYonker-lab-scripts/dwappett/f00001-B256-ts-opt.pdb'
+  tsforfitting='~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/f00001-B256-ts-opt.pdb'
   tslabel='f00001-B256'
 elif grep -q "QM-C" <<< $(pwd) || grep -q "C384" <<< $(pwd); then
-  tsforfitting='~/git/DeYonker-lab-scripts/dwappett/f00001-C384-ts-opt.pdb'
+  tsforfitting='~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/f00001-C384-ts-opt.pdb'
   tslabel='f00001-C384'
 else
   echo "can't determine active site from current directory name! please enter absolute path to optimised ts pdb file to fit"
@@ -81,7 +81,7 @@ for d in $(awk '{print $1}' $1); do
   # create new guess and label for clarity
   align_TSA_and_replace.py -modpdb ../${i}-opt.pdb -md -tspdb $tsforfitting -newpdb old_TS_aligned.${tslabel}.pdb
   # create input file
-  write_input.py -pdb tsguess.pdb -format orca -intmp ~/git/DeYonker-lab-scripts/dwappett/orcaxtb_intmp.txt -c -2 -inpn orca.inp
+  write_input.py -pdb tsguess.pdb -format orca -intmp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/orcaxtb_intmp.txt -c -2 -inpn orca.inp
   bond1a=$(( $(awk '$4 == "COR" && $3 == "C1" {print $2}' tsguess.pdb) - 1 ))
   bond1b=$(( $(awk '$4 == "COR" && $3 == "C9" {print $2}' tsguess.pdb) - 1 ))
   bond2a=$(( $(awk '$4 == "COR" && $3 == "C5" {print $2}' tsguess.pdb) - 1 ))
@@ -96,7 +96,7 @@ for d in $(awk '{print $1}' $1); do
   cd $wkdr
 done
 
-cp ~/git/DeYonker-lab-scripts/dwappett/1-array-tsconstrained 1-array-tsconstrained-newguess
+cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array-tsconstrained 1-array-tsconstrained-newguess
 sed -i "s/ASTART-AEND\%1/${joblist}%4/" 1-array-tsconstrained-newguess
 
 echo ""

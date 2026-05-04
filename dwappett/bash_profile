@@ -1,0 +1,98 @@
+# .bash_profile
+
+# Get the aliases and functions
+if [ -f ~/.bashrc ]; then
+	. ~/.bashrc
+fi
+
+# User specific environment and startup programs
+
+### General path. Separated out for easy reordering/removing
+export PATH=/home/dwappett/miniconda3/bin/
+export PATH=$PATH:/home/dwappett/git/RINRUS/bin/
+export PATH=$PATH:/home/dwappett/git/RINRUS/bin/FSAPT/
+export PATH=$PATH:/home/dwappett/git/RINRUS/bin/DAW_prototypes
+export PATH=$PATH:/home/dwappett/DAW_scripts
+export PATH=$PATH:/home/dwappett/git/DeYonker-lab-scripts
+export PATH=$PATH:/home/dwappett/git/DeYonker-lab-scripts/dwappett
+export PATH=$PATH:/home/dwappett/git/DeYonker-lab-scripts/CM_MD_to_QM_project
+export PATH=$PATH:/home/dwappett/git/DeYonker-lab-scripts/MD-analysis
+export PATH=$PATH:/home/dwappett/newbin
+export PATH=$PATH:/home/tsuhagia/pymol
+export PATH=$PATH:/bin
+export PATH=$PATH:/usr/bin
+export PATH=$PATH:/usr/local/bin
+export PATH=$PATH:/usr/local/sbin
+export PATH=$PATH:/usr/sbin
+export PATH=$PATH:/home/dwappett/.local/bin
+export PATH=$PATH:/home/ndyonker/git/psi4/objdir/stage/bin
+export PATH=$PATH:/home/ndyonker/.conda/envs/p4dev/bin
+export PATH=$PATH:/home/ndyonker/src/bin
+export PATH=$PATH:/home/ndyonker/src/mgltools_x86_64Linux2_1.5.7/bin
+export PATH=$PATH:/home/ndyonker/src/orca_6_0_0
+export PATH=$PATH:/home/dwappett/git/Pymol-script-repo
+export PATH=$PATH:/home/dwappett/git/MDANCE/scripts/nani
+
+### Python path
+export PYTHONPATH=/home/dwappett/git/RINRUS/lib3
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/git/RINRUS/bin/
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/git/RINRUS/bin/DAW_prototypes/
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/git/RINRUS/bin/FSAPT/
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/DAW_scripts/
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/git/DeYonker-lab-scripts
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/git/DeYonker-lab-scripts/dwappett
+#export PYTHONPATH=$PYTHONPATH:/home/tsuhagia/pymol/lib/python3.7/site-packages/
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/git/Pymol-script-repo/
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/git/EnzyHTP
+export PYTHONPATH=$PYTHONPATH:/home/dwappett/miniconda3/envs/enzy_htp/lib/
+
+export LD_LIBRARY_PATH=$HOME/git/RINRUS/lib3:$LD_LIBRARY_PATH
+
+unset USERNAME
+export LARGE_FILES=y
+
+PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD}\007"'
+TERM=xterm
+
+export LS_COLORS='no=00:fi=00:di=01;31:ln=01;36:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:ex=01;32:*out=01;34:*inp=01;36:*chk=01;35'
+
+set PS1="$(whoami)@$(hostname):$(pwd)"
+
+export SVN_EDITOR=vi
+
+# AMBER
+export AMBERHOME=/public/apps/amber/amber18
+alias xleap='$AMBERHOME/bin/xleap'
+alias tleap='$AMBERHOME/bin/tleap'
+alias ptraj='$AMBERHOME/bin/ptraj'
+alias ambpdb='$AMBERHOME/bin/ambpdb'
+alias antechamber='$AMBERHOME/bin/antechamber'
+alias parmchk='$AMBERHOME/bin/parmchk'
+alias reduce='$AMBERHOME/bin/reduce'
+alias molsurf='$AMBERHOME/bin/molsurf'
+
+export UWHPSC=/home/ndyonker/src/coursera/uwhpsc
+export MYHPSC=/home/ndyonker/src/coursera/myhpsc
+
+alias autoconf='/public/apps/autoconf/2.69/bin/autoconf'
+alias gnuplot='/public/apps/gnuplot/5.0.1/bin/gnuplot'
+export NBOEXE=/home/ndyonker/src/nbo6/bin/nbo6.i8.exe
+
+alias sgs3='aws s3 --endpoint-url=https://s3.memphis.edu:8082'
+
+#pDynamo environment variables
+export PDYNAMO3_HOME=/home/ndyonker/git/pDynamo3
+export PDYNAMO3_ORCACOMMAND=/home/jfbchega/programs/orca_5_0_1_linux_x86-64_shared_openmpi411/orca
+export PDYNAMO3_PARAMETERS=$PDYNAMO3_HOME/parameters
+export PDYNAMO3_PYTHONCOMMAND=python3
+export PDYNAMO3_SCRATCH=/home/scratch/ndyonker/pDynamo
+export PDYNAMO3_STYLE=$PDYNAMO3_PARAMETERS/ccsStyleSheets/defaultStyle.css
+#export PYTHONPATH=/home/ndyonker/git/psi4/objdir/stage/lib:/home/ndyonker/src/xlrd:$PDYNAMO3_HOME:$PYTHONPATH
+export REDUCE_HET_DICT=/home/$USER/git/RINRUS/bin/reduce_wwPDB_het_dict.txt
+export PATH=$PATH:/home/jfbchega/programs/orca_5_0_1_linux_x86-64_shared_openmpi411
+export LD_LIBRARY_PATH=/home/jfbchega/programs/orca_5_0_1_linux_x86-64_shared_openmpi411:$LD_LIBRARY_PATH
+
+alias adt='/home/ndyonker/src/mgltools_x86_64Linux2_1.5.7/bin/adt'
+
+#for pymol
+module load openswr/21.3.9

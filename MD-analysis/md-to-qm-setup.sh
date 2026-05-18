@@ -126,7 +126,7 @@ for i in $(ls *.pdb); do
     gen_jobscript_orca6.sh
   elif [[ "$job" == "orcaxtb" ]]; then
     #mv 1.inp orca.inp
-    cp ~/git/DeYonker-lab-scripts/dwappett/1-orcaxtb 1
+    cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-orcaxtb 1
   fi
   cd -
 
@@ -136,7 +136,7 @@ for i in $(ls *.pdb); do
     mv tempdir f${startnum}-f$fnum
     sed -i "s/tempdir/f${startnum}-f$fnum/" workdirs.txt
     if [[ "$job" == "array" ]]; then
-      cp ~/git/DeYonker-lab-scripts/dwappett/1-array f${startnum}-f$fnum/1-array
+      cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array f${startnum}-f$fnum/1-array
       sed -i "s/ASTART-AEND\%4/$((10#$startnum))-$((10#$fnum))%1/" f${startnum}-f$fnum/1-array
       sed "s/job-name=ORCAJOB/job-name=ORCA-initialopt/" f${startnum}-f$fnum/1-array
     fi
@@ -152,7 +152,7 @@ if [ -d "tempdir" ]; then
   mv tempdir f${startnum}-f$fnum
   sed -i "s/tempdir/f${startnum}-f$fnum/" workdirs.txt
   if [[ "$job" == "array" ]]; then
-    cp ~/git/DeYonker-lab-scripts/dwappett/1-array f${startnum}-f$fnum/1-array
+    cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-array f${startnum}-f$fnum/1-array
     sed -i "s/ASTART-AEND\%1/$((10#$startnum))-$((10#$fnum))\%1/" f${startnum}-f$fnum/1-array
   fi
 fi

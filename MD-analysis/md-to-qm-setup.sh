@@ -126,7 +126,7 @@ for i in $(ls *.pdb); do
     gen_jobscript_orca6.sh
   elif [[ "$job" == "orcaxtb" ]]; then
     #mv 1.inp orca.inp
-    cp ~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/1-orcaxtb 1
+    cp ~/git/DeYonker-lab-scripts/1-orcaxtb 1
   fi
   cd -
 

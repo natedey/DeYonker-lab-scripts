@@ -35,17 +35,19 @@ def makeguesspdb(modelpdb,newpdb,lig):
 ##########
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Create tsguess.pdb for chorismate mutase models. Aligns old TS geom to model PDB ligand and then replaces it.")
-    parser.add_argument("-modpdb")
+    parser.add_argument("-modpdb", help='initialopt structure to fit ligand into')
     #parser.add_argument("-tspdb",default='/project/dwappett/chorismate_mutase/opts-expanded-models/res_13-ts-new-02-out.pdb')
-    parser.add_argument("-tspdb",default='~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/res_13-ts-new-02-out.pdb')
-    parser.add_argument("-newpdb",default='old_TS_aligned.pdb')
-    parser.add_argument("-md",action='store_true')
+    parser.add_argument("-tspdb",default='~/git/DeYonker-lab-scripts/CM_MD_to_QM_project/res_13-ts-new-02-out.pdb', help='structure to take COR/TSA ligand from')
+    parser.add_argument("-newpdb",default='old_TS_aligned.pdb', help='filename for saved ligand coords after fitting')
+    parser.add_argument("-md",action='store_true', help='(DEPRECATED) indicates that model is made from MD snapshot/lig name is COR, as of May 2026 that is default so this flag does nothing')
     args = parser.parse_args()
     modelpdb = args.modpdb
     #tspdb = args.tspdb
     tspdb = os.path.expanduser(args.tspdb)
     newpdb = args.newpdb
-    md = args.md
+    ### DAW May 2026: jan 2026 change noted above makes this script only compatible with MD models so TSA should not be default ligand name!!!
+    ### keeping '-md' arg in to not break subsequent scripts, but now it doesn't change anything so no probs if forgotten when using this manually
+    md = True
     
     if md:
         lig = 'COR'

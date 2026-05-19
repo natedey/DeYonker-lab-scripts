@@ -92,12 +92,15 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
     errorlog = []   # list to collect any error messages
 
     # load f00001 strucs as pymol objects for comparisons. DAW needs to figure out how to make this work for the individual models in her own dirs...
-    if modeltype == '':
+    if modeltype == '' and os.path.isdir('../f00001-f00010/f00001/'):
         cmd.load(glob.glob('../f00001-f00010/f00001/model_*_template.pdb')[0],'f00001tmp')
         cmd.load('../f00001-f00010/f00001/f00001-opt.pdb','f00001init')
         cmd.load(glob.glob('../f00001-f00010/f00001/tsopt/*-ts-opt.pdb')[0],'f00001ts')
         cmd.load(glob.glob('../f00001-f00010/f00001/tsopt/irc*/*-reactant-opt.pdb')[0],'f00001r')
         cmd.load(glob.glob('../f00001-f00010/f00001/tsopt/irc*/*-product-opt.pdb')[0],'f00001p')
+        first_loaded = True
+    else:
+        first_loaded = False
 
     for f in framedirs:
         print(f)
@@ -226,7 +229,7 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                         break 
                      
             # rmsds to f00001 as well
-            if modeltype == '':
+            if first_loaded:
                 MC_atom_names = '(name C or name CA or name N or name O or name H)'
                 for i in ['tmp','init','ts','r','p']:
                     fdata[f][f'rms_{i}-f00001{i}_all'] = str(round(cmd.rms_cur(i,f'f00001{i}'),2))
@@ -254,7 +257,7 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                     HO5_hb = [p for p in hbpairs[i].keys() if f'{ligid}/HO5' in p[0] or f'{ligid}/HO5' in p[1]]
                     # if there is h-bond involving HO5 identified, get the other element of the pair and then distance between the atoms
                     if HO5_hb: 
-                        other_atom = [at for at in HO5_hb[0] if ligid not in at][0]
+                        other_atom = [at for at in HO5_hb[0] if ligid not in at or 'HO5' not in at][0]
                         fdata[f][f'hb_HO5_{i}_fg'] = other_atom
                         fdata[f][f'hb_HO5_{i}_dist'] = str(round(cmd.get_distance(f'{i}///{ligid}/HO5', f'{i}//{other_atom}'),2))
                     else: #specifically label if no h-bond so that can be seen in plots (empty values/nans get ignored)

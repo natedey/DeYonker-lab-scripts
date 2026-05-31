@@ -66,7 +66,10 @@ if __name__ == '__main__':
         allqueue = [line.split() for line in allqueue.stdout.split('\n') if line]
         for qj in allqueue:
             qj[0] = 'f'+qj[0].zfill(5)
-            qj[1] = qj[1].replace('ORCA-','')
+            if qj[1] == 'ORCAJOB':
+                qj[1] == 'initialopt'
+            else:
+                qj[1] = qj[1].replace('ORCA-','')
             if qj[2] == 'RUNNING':
                 qj[2] = 'running'
             else:

@@ -353,7 +353,7 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
 
     ### make error log file if any errors ###
     if errorlog:
-        with open(f'{dirlabel}_collection_errors.txt') as fp:
+        with open(f'{dirlabel}_collection_errors.txt','w') as fp:
             fp.write('\n'.join(errorlog))
 
     return fdata

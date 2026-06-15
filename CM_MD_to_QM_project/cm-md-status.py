@@ -143,10 +143,13 @@ if __name__ == '__main__':
                 statuscount[j]['ready for next step'] = statuscount[j]['done'] - len([statustable[k]['tsopt'] for k in statustable.keys() if statustable[k]['tsopt']])
             if j == 'tsopt':
                 statuscount[j]['ready for next step'] = statuscount[j]['done'] - len([statustable[k]['irc1'] for k in statustable.keys() if statustable[k]['irc1']])
+                for i in ['needs_new_guess','needs_direct_tsopt']:
+                    statuscount[j][i] = len([statustable[k][j] for k in statustable.keys() if statustable[k][j] in [i, f'{i}_queued',f'{i}_running']])
             for i in ['maxcyc','orcaerror','optcrash','freqcrash','extraimagmodes','tsmodegone','CHECK_MANUALLY']:
                 N = len([statustable[k][j] for k in statustable.keys() if statustable[k][j] in [i, f'{i}_queued',f'{i}_running']])
                 Nq = len([statustable[k][j] for k in statustable.keys() if statustable[k][j] in [f'{i}_queued',f'{i}_running']])
                 statuscount[j][i] = f'{N} ({Nq} in queue)'
+                
         
         df = pd.DataFrame.from_dict(statuscount,orient='columns')
         df = df[['initialopt','tsconstrained','tsopt','irc1','irc2']]

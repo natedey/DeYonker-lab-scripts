@@ -158,19 +158,35 @@ checkdirstate () {
    fi
   fi
 
-  ### tsopt only: after all imag mode-based reassignments, determine if model ready to exclude ###
+  ### tsopt only: after all imag mode-based reassignments, determine if model ready for new guess/direct tsopt/to exclude ###
   if [[ "$2" == "tsopt" ]] && [[ "$state" == "CHECK_MANUALLY" ]]; then 
     chk=$(grep "$1" check_tsopt_CHECK_MANUALLY.txt)
     # make sure job has failed (based on message in check_manually)
-    if grep -q -i -e "ts mode gone" -e "tightopt already on" -e "Recalc_Hess 100" <<< $chk; then failed=1; else failed=0; fi
-    # make sure that alternative ways of getting ts have been tried (based on presence of renamed old dirs)
-    j=$(echo $1 | awk -F/ '{print $1}')
-    if [[ -d $j/original-tsguess-tsconstrained ]] && [[ -d $j/original-tsguess-tsopt ]] && [[ -d $j/tsopt-failed ]]; then triedallways=1; else triedallways=0; fi
-    # if both criteria met, exclude
-    if [[ "$failed" == 1 ]] && [[ "$triedallways" == 1 ]]; then
-     echo $chk >> check_tsopt_excluded.txt
-     sed -i "\#$j#d" check_tsopt_CHECK_MANUALLY.txt
+    if grep -q -i -e "ts mode gone" -e "tightopt already on" -e "Recalc_Hess 100" <<< $chk; then
+      j=$(echo $1 | awk -F/ '{print $1}')
+      # if both alternative ways tried: excluded
+      ### DAW note: tsopt setup script doesn't copy altts-newguess from tsconstrained dir so have to check for presence of dirs instead of altts files!
+      if [[ -d $j/original-tsguess-tsconstrained ]] && [[ -d $j/original-tsguess-tsopt ]] && [[ -d $j/tsopt-failed ]]; then
+        echo $chk >> check_tsopt_excluded.txt
+        sed -i "\#$j#d" check_tsopt_CHECK_MANUALLY.txt
+      # if already on new guess but no tsopt-failed yet: still need to try direct tsopt
+      elif [[ -d $j/original-tsguess-tsconstrained ]] && [[ -d $j/original-tsguess-tsopt ]]; then 
+        echo $chk >> check_tsopt_needs_direct_tsopt.txt
+        sed -i "\#$j#d" check_tsopt_CHECK_MANUALLY.txt
+      # if havent done new guess yet: need to try that
+      elif [[ ! -d $j/original-tsguess-tsconstrained ]] && [[ ! -d $j/original-tsguess-tsopt ]] && [[ ! -d $j/tsopt-failed ]]; then
+        echo $chk >> check_tsopt_needs_new_guess.txt
+        sed -i "\#$1#d" check_tsopt_CHECK_MANUALLY.txt
+      fi
     fi
+    # make sure that alternative ways of getting ts have been tried (based on presence of renamed old dirs)
+    #j=$(echo $1 | awk -F/ '{print $1}')
+    #if [[ -d $j/original-tsguess-tsconstrained ]] && [[ -d $j/original-tsguess-tsopt ]] && [[ -d $j/tsopt-failed ]]; then triedallways=1; else triedallways=0; fi
+    # if both criteria met, exclude
+    #if [[ "$failed" == 1 ]] && [[ "$triedallways" == 1 ]]; then
+    # echo $chk >> check_tsopt_excluded.txt
+    # sed -i "\#$j#d" check_tsopt_CHECK_MANUALLY.txt
+    #fi
   fi
 }
 

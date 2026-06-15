@@ -25,20 +25,30 @@ to be safe, please prepare the list BY HAND!
 elif grep -q -e 'initialopt' -e 'irc1' -e 'irc2' <<< $1; then
   echo "you should not be trying to use this script with an initialopt/irc1/irc2 list!"
   exit
-elif [[ "$1" == "check_tsopt_"* || "$1" == "check_tsconstrained_"* ]]; then
-  echo "
-  looks like you've provided one of the standard automated check_cm_jobs.sh output lists which is not recommended.
-  those lists do not distinguish whether a tsopt is currently stuck at the normal first try/new guess/direct tsopt
-  and this script does not skip already set up directories like the original cmsetup-tsconstrained does!!!
-  this directories in the list given to this script:
-    a) must have failed with the standard procedure
-    b) must NOT have already had a new guess set up with this script or otherwise
-  if you are not 100% confident that everything in this list meets those criteria, press enter to cancel
-  otherwise enter Y to continue with list $1"
+#elif [[ "$1" == "check_tsopt_"* || "$1" == "check_tsconstrained_"* ]]; then
+#  echo "
+#  looks like you've provided one of the standard automated check_cm_jobs.sh output lists which is not recommended.
+#  those lists do not distinguish whether a tsopt is currently stuck at the normal first try/new guess/direct tsopt
+#  and this script does not skip already set up directories like the original cmsetup-tsconstrained does!!!
+#  this directories in the list given to this script:
+#    a) must have failed with the standard procedure
+#    b) must NOT have already had a new guess set up with this script or otherwise
+#  if you are not 100% confident that everything in this list meets those criteria, press enter to cancel
+#  otherwise enter Y to continue with list $1"
+#  read altlist
+#  if [[ "${altlist,,}" == "y" ]]; then
+#    echo "continuing with list $1"
+#  else
+#    exit
+#  fi
+elif [[ "$1" != "check_tsopt_needs_new_guess.txt" ]]; then
+  echo "this script is designed to be used with the check_tsopt_needs_new_guess.txt list which is not what was provided
+are you sure you want to continue with list $1? [Y/N]"
   read altlist
   if [[ "${altlist,,}" == "y" ]]; then
     echo "continuing with list $1"
   else
+    echo "quitting"
     exit
   fi
 fi

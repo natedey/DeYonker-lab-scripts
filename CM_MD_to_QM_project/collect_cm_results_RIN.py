@@ -25,9 +25,9 @@ from pymol import cmd
 from read_write_pdb import read_pdb
 from model_details import get_model_FGs
 from probe2rins import atom_split
+import math 
 import pandas as pd
 import matplotlib
-import math
 import matplotlib.pyplot as plt
 import networkx as nx
 
@@ -112,6 +112,7 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
             'maxmove_diff_tmp-init', 'maxmove_diff_guess-ts', 'maxmove_diff_ts-r', 'maxmove_diff_ts-p', 'maxmove_diff_p-r', 'maxmove_diff_r-init', 'Hdetached',
             'Nhb_ts_all', 'Nhb_ts_lig', 'Nhb_r_all', 'Nhb_r_lig', 'Nhb_p_all', 'Nhb_p_lig', 'hb_HO5_ts_fg', 'hb_HO5_ts_dist', 'hb_HO5_r_fg', 'hb_HO5_r_dist', 'hb_HO5_p_fg', 'hb_HO5_p_dist',
             'hb_ts_lig-Arg63', 'hb_r_lig-Arg63', 'hb_p_lig-Arg63', 'hb_ts_lig-Arg7', 'hb_r_lig-Arg7', 'hb_p_lig-Arg7','hb_ts_lig-Arg90','hb_r_lig-Arg90','hb_p_lig-Arg90',
+            'model_r_CC', 'model_ts_CC', 'model_p_CC', 'model_r_BC', 'model_ts_BC', 'model_p_BC','model_r_DC', 'model_ts_DC', 'model_p_DC',
             'ts_path', 'ts_elE', 'ts_elE+ZPE', 'ts_thrmE', 'ts_H', 'ts_G', 'ts_Nbasis', 'ts_Nimag', 'ts_Gkcal', 'ts_imagmodes',
             'r_path', 'r_elE', 'r_elE+ZPE', 'r_thrmE', 'r_H', 'r_G', 'r_Nbasis', 'r_Nimag', 'r_Gkcal', 'r_imagmodes',
             'p_path', 'p_elE', 'p_elE+ZPE', 'p_thrmE', 'p_H', 'p_G', 'p_Nbasis', 'p_Nimag', 'p_Gkcal', 'p_imagmodes',
@@ -289,13 +290,13 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                     BC_residues = sorted(BC_analysis.items(), key=lambda x: x[1], reverse=True)
                     CC_residues = sorted(CC_analysis.items(), key=lambda x: x[1], reverse=True)
                     DC_residues = sorted(DC_analysis.items(), key=lambda x: x[1], reverse=True)
-                    fdata[f][f'{i}_BC'] = str(BC_residues)
-                    fdata[f][f'{i}_CC'] = str(CC_residues)
-                    fdata[f][f'{i}_DC'] = str(DC_residues)
+                    fdata[f][f'model_{i}_BC'] = str(BC_residues)
+                    fdata[f][f'model_{i}_CC'] = str(CC_residues)
+                    fdata[f][f'model_{i}_DC'] = str(DC_residues)
                 else :
-                    fdata[f][f'{i}_BC'] = 'N/A'
-                    fdata[f][f'{i}_CC'] = 'N/A'
-                    fdata[f][f'{i}_DC'] = 'N/A'
+                    fdata[f][f'model_{i}_BC'] = 'N/A'
+                    fdata[f][f'model_{i}_CC'] = 'N/A'
+                    fdata[f][f'model_{i}_DC'] = 'N/A'
             ##########################################################################################
             ###                   ADD NEW COMMANDS (EG DISTANCES, ANGLES) HERE                     ###            
 
@@ -347,79 +348,88 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                     else:
                         fdata[f][f'hb_{i}_lig-Arg7'] = f'{len(argpairs)}hb'
                     
-                    #trying for Arg90 see if has interactions with the substrate
+                    #Testing for Arg90 see if it works
                     if ligid == '384': arg = 'C/346'
                     elif ligid == '128': arg = 'A/90'
                     elif ligid == '256': arg = 'B/218'
-                    #get all probe h-bonds between arg and ligand
+                    
                     argpairs = [p for p in hbpairs[i].keys() if (arg in p[0] and ligid in p[1]) or (arg in p[1] and ligid in p[0])]
+                    
                     fdata[f][f'hb_{i}_lig-Arg90'] = f'{len(argpairs)}hb'
+                    
                     arg_chain, arg_resi = arg.split('/')
+                    
+                    #Trying to get the HE_hb interaction by finding any  keys with HE and Arg90, Arg218 or Arg346
                     HE_hb = [p for p in hbpairs[i].keys() if f'{arg}/HE' in p[0] or f'{arg}/HE' in p[1]]
                     if HE_hb:
                         other_atom = [at for at in HE_hb[0] if ligid not in at or 'HE' not in at][0]
-                        oa_chain, oa_resi, oa_name = other_atom.split('/')
+                        other_atom_chain, other_atom_resi, other_atom_name = other_atom.split('/') # let's split the other atoms so the cm.get_distance can identify only two residues 
+                                                                                                   # example A/128/O4 --> "A" , "128" , "O4"
                         
-                        sel_arg = f"first (model {i} and chain {arg_chain} and resi {arg_resi} and name HE)"
-                        sel_other = f"first (model {i} and chain {oa_chain} and resi {oa_resi} and name {oa_name})"
+                        sel_arg = f"first (model {i} and chain {arg_chain} and resi {arg_resi} and name HE)" # let's make the match selection each Arg
+                        sel_other = f"first (model {i} and chain {other_atom_chain} and resi {other_atom_resi} and name {other_atom_name})" # let's make the match selecting each other atomo close to that Arginine
                         
                         fdata[f][f'hb_HE_{i}_fg'] = other_atom
-                        fdata[f][f'hb_HE_{i}_dist'] = str(round(cmd.get_distance(sel_arg, sel_other, state=1),2))
-                    else: 
+                        fdata[f][f'hb_HE_{i}_dist'] = str(round(cmd.get_distance(sel_arg, sel_other, state=1),2))# state=1 means : count only the first frame that you find with this arginine and other atom
+                    else:
                         fdata[f][f'hb_HE_{i}_fg'] = 'none'
 
                     HH11_hb = [p for p in hbpairs[i].keys() if f'{arg}/HH11' in p[0] or f'{arg}/HH11' in p[1]]
                     if HH11_hb:
                         other_atom = [at for at in HH11_hb[0] if ligid not in at or 'HH11' not in at][0]
-                        oa_chain, oa_resi, oa_name = other_atom.split('/')
-                        
+                        other_atom_chain, other_atom_resi, other_atom_name = other_atom.split('/')# let's split the other atoms so the cm.get_distance can identify only two residues
+
+
+
                         sel_arg = f"first (model {i} and chain {arg_chain} and resi {arg_resi} and name HH11)"
-                        sel_other = f"first (model {i} and chain {oa_chain} and resi {oa_resi} and name {oa_name})"
+                        sel_other = f"first (model {i} and chain {other_atom_chain} and resi {other_atom_resi} and name {other_atom_name})" 
                         
                         fdata[f][f'hb_HH11_{i}_fg'] = other_atom
                         fdata[f][f'hb_HH11_{i}_dist'] = str(round(cmd.get_distance(sel_arg, sel_other, state=1),2))
-                    else: 
+                    else:
                         fdata[f][f'hb_HH11_{i}_fg'] = 'none'
 
                     HH12_hb = [p for p in hbpairs[i].keys() if f'{arg}/HH12' in p[0] or f'{arg}/HH12' in p[1]]
                     if HH12_hb:
                         other_atom = [at for at in HH12_hb[0] if ligid not in at or 'HH12' not in at][0]
-                        oa_chain, oa_resi, oa_name = other_atom.split('/')
-                        
+                        other_atom_chain, other_atom_resi, other_atom_name = other_atom.split('/')# let's split the other atoms so the cm.get_distance can identify only two residues
+
+
                         sel_arg = f"first (model {i} and chain {arg_chain} and resi {arg_resi} and name HH12)"
-                        sel_other = f"first (model {i} and chain {oa_chain} and resi {oa_resi} and name {oa_name})"
+                        sel_other = f"first (model {i} and chain {other_atom_chain} and resi {other_atom_resi} and name {other_atom_name})"
                         
                         fdata[f][f'hb_HH12_{i}_fg'] = other_atom
                         fdata[f][f'hb_HH12_{i}_dist'] = str(round(cmd.get_distance(sel_arg, sel_other, state=1),2))
-                    else: 
+                    else:
                         fdata[f][f'hb_HH12_{i}_fg'] = 'none'
 
                     HH21_hb = [p for p in hbpairs[i].keys() if f'{arg}/HH21' in p[0] or f'{arg}/HH21' in p[1]]
                     if HH21_hb:
                         other_atom = [at for at in HH21_hb[0] if ligid not in at or 'HH21' not in at][0]
-                        oa_chain, oa_resi, oa_name = other_atom.split('/')
-                        
+                        other_atom_chain, other_atom_resi, other_atom_name = other_atom.split('/')# let's split the other atoms so the cm.get_distance can identify only two residues
+                                                                                                
+
                         sel_arg = f"first (model {i} and chain {arg_chain} and resi {arg_resi} and name HH21)"
-                        sel_other = f"first (model {i} and chain {oa_chain} and resi {oa_resi} and name {oa_name})"
+                        sel_other = f"first (model {i} and chain {other_atom_chain} and resi {other_atom_resi} and name {other_atom_name})"
                         
                         fdata[f][f'hb_HH21_{i}_fg'] = other_atom
                         fdata[f][f'hb_HH21_{i}_dist'] = str(round(cmd.get_distance(sel_arg, sel_other, state=1),2))
-                    else: 
+                    else:
                         fdata[f][f'hb_HH21_{i}_fg'] = 'none'
 
                     HH22_hb = [p for p in hbpairs[i].keys() if f'{arg}/HH22' in p[0] or f'{arg}/HH22' in p[1]]
                     if HH22_hb:
                         other_atom = [at for at in HH22_hb[0] if ligid not in at or 'HH22' not in at][0]
-                        oa_chain, oa_resi, oa_name = other_atom.split('/')
-                        
+                        other_atom_chain, other_atom_resi, other_atom_name = other_atom.split('/')# let's split the other atoms so the cm.get_distance can identify only two residues
+                                                                                                   
+
                         sel_arg = f"first (model {i} and chain {arg_chain} and resi {arg_resi} and name HH22)"
-                        sel_other = f"first (model {i} and chain {oa_chain} and resi {oa_resi} and name {oa_name})"
+                        sel_other = f"first (model {i} and chain {other_atom_chain} and resi {other_atom_resi} and name {other_atom_name})"
                         
                         fdata[f][f'hb_HH22_{i}_fg'] = other_atom
                         fdata[f][f'hb_HH22_{i}_dist'] = str(round(cmd.get_distance(sel_arg, sel_other, state=1),2))
-                    else: 
+                    else:
                         fdata[f][f'hb_HH22_{i}_fg'] = 'none'
-            
             ##########################################################################################
 
             # delete all pymol objects for this model so nothing left to potentially interfere with next iteration

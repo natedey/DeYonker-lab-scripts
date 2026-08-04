@@ -1,0 +1,5 @@
+nprocs: 4
+maxcore: 2
+jobtype: neb-ts numfreq
+method: Native-GFN2-xTB
+solvent: ALPB(water) nopop NoPropFile

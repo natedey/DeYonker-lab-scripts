@@ -168,19 +168,29 @@ export SLURM_TIME_FORMAT="%d %b %H:%M"
 
 # reformatted qs with more info and option to sort by status
 # if run with a username as optional argument it'll match old version
-function qs() {
-  if [ -z "$1" ]; then 
+function qs() { 
+  if [ -z "$1" ]; then
     squeue -u "$USER" -h -t pending,running,suspended -r -o "%P %T" | uniq -c
-    sacct --state=running,pending,suspended -u "$USER" -X -o jobid%-12,partition%-10,submit%-12,state%-8,start%-12,elapsed%12,timelimit%12,workdir%-120
+    # note that sacct doesn't show all pending jobs properly - equivalent squeue command (used by qs -p) made default instead
+    #sacct --state=running,pending,suspended -u "$USER" -X -o jobid%-14,partition%-4,submit%-12,state%-8,start%-12,elapsed%12,timelimit%12,jobname%-10,workdir%-110
+    squeue -u "$USER" -t running,pending,suspended -o "%14i %4P %12V %8T %12S %.12M %.12l %10j %110Z" --sort="i,V,S"
+  elif [[ "$1" == "-r" ]]; then
+    squeue -u "$USER" -h -t pending,running,suspended -r -o "%P %T" | uniq -c
+    squeue -u "$USER" -t running,pending,suspended -r -o "%14i %4P %12V %8T %12S %.12M %.12l %10j %110Z" --sort="i,V,S"
+  elif [[ "$1" == "-p" ]]; then
+    squeue -u "$USER" -h -t pending,running,suspended -r -o "%P %T" | uniq -c
+    squeue -u "$USER" -t running,pending,suspended -o "%14i %4P %12V %8T %12S %.12M %.12l %10j %110Z" --sort="i,V,S"
+  elif [[ "$1" == "-d" ]]; then
+    squeue -u "$USER" -t running,pending,suspended -o "%14i %8T %.12M %10j %150Z" --sort="i,V,S"
   elif [[ "$1" == "sort" ]]; then
-    squeue -u "$USER" -h -t pending,running,suspended -r -o "%P %T" | uniq -c 
-    sacct --state=pending -u "$USER" -X -o jobid%-12,partition%-10,submit%-12,state%-8,start%-12,elapsed%12,timelimit%12,workdir%-120
-    sacct --state=running,suspended -u "$USER" -X -o jobid%-12,partition%-10,submit%-12,state%-8,start%-12,elapsed%12,timelimit%12,workdir%-120 | awk 'NR > 1'
-  else 
+    squeue -u "$USER" -h -t pending,running,suspended -r -o "%P %T" | uniq -c
+    squeue -u "$USER" -t running,pending,suspended -r -o "%14i %4P %12V %8T %12S %.12M %.12l %10j %110Z" --sort="T,V,S"
+  else
     squeue -u "$1" -h -t pending,running,suspended -r -O "state" | uniq -c
     sacct --state=running,pending,suspended -u "$1" -X -o state,partition,elapsed,timelimit%15,jobid%15,workdir%-120
-  fi 
+  fi
 }
+
 # check which jobs have finished in the last hour/day/week. test-qf.sh better because also checks for success
 alias qfh='sacct -u "$USER" -X -S now-1hour -E now -s CA,CD,DL,OOM,F,TO -o end%-14,jobid%-8,state%-20,elapsed%12,workdir%-120 | (sed -u 2q; sort -k1,3)'
 alias qfd='sacct -u "$USER" -X -S now-1day -E now -s CA,CD,DL,OOM,F,TO -o end%-14,jobid%-8,state%-20,elapsed%12,workdir%-120 | (sed -u 2q; sort -k1,3)'

@@ -75,12 +75,14 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
     vals = ['fnum', 'ligand', 'size', 'charge', 'done', 'reactant', 'product', 'ts_type', 'dGa', 'dGr', 
             'ts_C1-C9_dist', 'ts_C5-O7_dist', 'r_C1-C9_dist', 'r_C5-O7_dist', 'p_C1-C9_dist', 'p_C5-O7_dist', 'r_C1-C5-O7-C9_dihedral', 'p_C5-C1-C9-O7_dihedral',
             'rms_tmp-init_all', 'rms_tmp-init_lig', 'rms_tmp-init_prot', 'rms_tmp-init_wat', 'rms_guess-ts_all','rms_guess-ts_lig', 'rms_guess-ts_prot', 'rms_guess-ts_wat', 'rms_r-init_all', 'rms_r-init_lig', 'rms_r-init_prot', 'rms_r-init_wat',
+            'rms_r-tmp_all', 'rms_r-tmp_lig', 'rms_r-tmp_prot', 'rms_r-tmp_wat',
             'rms_ts-r_all', 'rms_ts-r_lig', 'rms_ts-r_prot', 'rms_ts-r_wat', 'rms_p-r_all', 'rms_p-r_lig', 'rms_p-r_prot', 'rms_p-r_wat', 'rms_ts-p_all', 'rms_ts-p_lig', 'rms_ts-p_prot', 'rms_ts-p_wat',
             'rms_tmp-f00001tmp_all', 'rms_tmp-f00001tmp_SC', 'rms_tmp-f00001tmp_MC', 'rms_init-f00001init_all', 'rms_init-f00001init_SC', 'rms_init-f00001init_MC', 'rms_ts-f00001ts_all', 'rms_ts-f00001ts_SC', 'rms_ts-f00001ts_MC', 'rms_r-f00001r_all', 'rms_r-f00001r_SC', 'rms_r-f00001r_MC', 'rms_p-f00001p_all', 'rms_p-f00001p_SC', 'rms_p-f00001p_MC',
-            'maxmove_H_tmp-init', 'maxmove_H_guess-ts', 'maxmove_H_ts-r', 'maxmove_H_ts-p', 'maxmove_H_p-r', 'maxmove_H_r-init', 
-            'maxmove_heavy_tmp-init', 'maxmove_heavy_guess-ts', 'maxmove_heavy_ts-r', 'maxmove_heavy_ts-p', 'maxmove_heavy_p-r', 'maxmove_heavy_r-init',
-            'maxmove_diff_tmp-init', 'maxmove_diff_guess-ts', 'maxmove_diff_ts-r', 'maxmove_diff_ts-p', 'maxmove_diff_p-r', 'maxmove_diff_r-init', 'Hdetached',
-            'Nhb_ts_all', 'Nhb_ts_lig', 'Nhb_r_all', 'Nhb_r_lig', 'Nhb_p_all', 'Nhb_p_lig', 'hb_HO5_ts_fg', 'hb_HO5_ts_dist', 'hb_HO5_r_fg', 'hb_HO5_r_dist', 'hb_HO5_p_fg', 'hb_HO5_p_dist',
+            'maxmove_H_tmp-init', 'maxmove_H_guess-ts', 'maxmove_H_ts-r', 'maxmove_H_ts-p', 'maxmove_H_p-r', 'maxmove_H_r-init', 'maxmove_H_r-tmp', 
+            'maxmove_heavy_tmp-init', 'maxmove_heavy_guess-ts', 'maxmove_heavy_ts-r', 'maxmove_heavy_ts-p', 'maxmove_heavy_p-r', 'maxmove_heavy_r-init', 'maxmove_heavy_r-tmp',
+            'maxmove_diff_tmp-init', 'maxmove_diff_guess-ts', 'maxmove_diff_ts-r', 'maxmove_diff_ts-p', 'maxmove_diff_p-r', 'maxmove_diff_r-init', 'maxmove_diff_r-tmp', 'Hdetached',
+            'Nhb_ts_all', 'Nhb_ts_lig', 'Nhb_ts_wat', 'Nhb_r_all', 'Nhb_r_lig', 'Nhb_r_wat', 'Nhb_p_all', 'Nhb_p_lig', 'Nhb_p_wat', 'Nat_hb_to_wat_ts', 'Nat_hb_to_wat_r', 'Nat_hb_to_wat_p',
+            'hb_HO5_ts_fg', 'hb_HO5_ts_dist', 'hb_HO5_r_fg', 'hb_HO5_r_dist', 'hb_HO5_p_fg', 'hb_HO5_p_dist',
             'hb_ts_lig-Arg63', 'hb_r_lig-Arg63', 'hb_p_lig-Arg63', 'hb_ts_lig-Arg7', 'hb_r_lig-Arg7', 'hb_p_lig-Arg7',
             'ts_path', 'ts_elE', 'ts_elE+ZPE', 'ts_thrmE', 'ts_H', 'ts_G', 'ts_Nbasis', 'ts_Nimag', 'ts_Gkcal', 'ts_imagmodes',
             'r_path', 'r_elE', 'r_elE+ZPE', 'r_thrmE', 'r_H', 'r_G', 'r_Nbasis', 'r_Nimag', 'r_Gkcal', 'r_imagmodes',
@@ -201,7 +203,8 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
             fdata[f]['r_C1-C5-O7-C9_dihedral'] = str(round(cmd.get_dihedral(f'r///{ligid}/C1',f'r///{ligid}/C5',f'r///{ligid}/O7',f'r///{ligid}/C9'),2))
             fdata[f]['p_C5-C1-C9-O7_dihedral'] = str(round(cmd.get_dihedral(f'p///{ligid}/C5',f'p///{ligid}/C1',f'p///{ligid}/C9',f'p///{ligid}/O7'),2))
             # define pairs of strucs and then compare them: rmsds and the biggest difference in position ("maxmove") for any individual atom
-            for i in [('tmp','init'),('guess','ts'),('ts','r'),('p','r'),('ts','p'),('r','init')]:
+            # DAW 2026-08-20: added comparison between template and optimised reactant for batch model paper
+            for i in [('tmp','init'),('guess','ts'),('ts','r'),('p','r'),('ts','p'),('r','init'),('r','tmp')]:
                 fdata[f][f'rms_{i[0]}-{i[1]}_all'] = str(round(cmd.rms_cur(i[0],i[1]),2))
                 fdata[f][f'rms_{i[0]}-{i[1]}_lig'] = str(round(cmd.rms_cur(f'{i[0]} and resn COR', f'({i[1]} and resn COR)'),2))
                 fdata[f][f'rms_{i[0]}-{i[1]}_prot'] = str(round(cmd.rms_cur(f'{i[0]} and not resn COR and not resn WAT', f'({i[1]} and not resn COR and not resn WAT)'),2))
@@ -246,6 +249,14 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
                 if hbpairs[i]:
                     fdata[f][f'Nhb_{i}_all'] = len(hbpairs[i].keys())
                     fdata[f][f'Nhb_{i}_lig'] = len([p for p in hbpairs[i].keys() if ligid in p[0] or ligid in p[1]])
+                    # DAW 2026-08-20: add water h-bond analysis too
+                    fdata[f][f'Nhb_{i}_wat'] = len([p for p in hbpairs[i].keys() if 'W/' in p[0] or 'W/' in p[1]])
+                    hb_to_wat = []
+                    for p in hbpairs[i].keys():
+                        if 'W/' in p[0] or 'W/' in p[1]:
+                            if 'W/' not in p[0]: hb_to_wat.append(p[0])
+                            if 'W/' not in p[1]: hb_to_wat.append(p[1])
+                    fdata[f][f'Nat_hb_to_wat_{i}'] = len(set(hb_to_wat))
 
             ##########################################################################################
             ###                   ADD NEW COMMANDS (EG DISTANCES, ANGLES) HERE                     ###            
@@ -283,7 +294,20 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
 
                     # Duplicate section above but for Arg7, col names already added into vars list at top for you
                     #if ligid == '128': arg = 'A/7'
-
+                    #modifications made by Pedro Garber 5th of June
+                    if ligid == '384': arg = 'C/263'
+                    elif ligid == '128': arg = 'A/7'
+                    elif ligid == '256': arg = 'B/135'
+                    argpairs = [p for p in hbpairs[i].keys() if (arg in p[0] and ligid in p[1]) or (arg in p[1] and ligid in p[0])]
+                    if len(argpairs) == 2:
+                        ligatom0 = [atom for atom in argpairs[0] if ligid in atom]
+                        ligatom1 = [atom for atom in argpairs[1] if ligid in atom]
+                        if ligatom0 == ligatom1:
+                            fdata[f][f'hb_{i}_lig-Arg7'] = '2hb-sameO'
+                        else:
+                            fdata[f][f'hb_{i}_lig-Arg7'] = '2hb-diffO'
+                    else:
+                        fdata[f][f'hb_{i}_lig-Arg7'] = f'{len(argpairs)}hb'
 
  
 

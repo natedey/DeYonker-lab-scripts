@@ -25,7 +25,6 @@ extract.sh [file(s)]  -to extract from specific file(s) (needs to be file name n
 exit
 fi
 
-
 if [ -z "$1" ] || [[ "$1" == "list" ]]; then
   if [ -z "$1" ]; then
     directories=( `find ./ -type d` )
@@ -47,7 +46,9 @@ if [ -z "$1" ] || [[ "$1" == "list" ]]; then
 	      scf=$(grep "Total energy after final integration" $i/orca.out | tail -1 | awk '{print $7}')
 	  fi
           nbasis=$(grep -a -m 1 "Number of basis functions" $i/orca.out | awk '{print "="$NF}')
-          if grep -q "VIBRATIONAL FREQUENCIES" "$i/orca.out"; then
+          # check that there are vib frequencies and the last vib block is AFTER the optimization run (grep -n gets line numbers)
+          # otherwise don't include zpe/thmE/H/G bc they aren't present or aren't correct
+          if grep -q "VIBRATIONAL FREQUENCIES" $i/orca.out && [ "$(grep -n 'VIBRATIONAL FREQUENCIES' $i/orca.out | tail -1 | awk -F: '{print $1}')" -gt "$(grep -n 'OPTIMIZATION RUN DONE' $i/orca.out | awk -F: '{print $1}')" ]; then
 	      ZPE=$(grep "Zero point energy" $i/orca.out | tail -1 | awk '{print $5}')
               EZPE=$(echo $scf + $ZPE | bc)
               thmE=$(grep "Total thermal energy" $i/orca.out | tail -1 | awk '{print $5}')
@@ -62,7 +63,7 @@ if [ -z "$1" ] || [[ "$1" == "list" ]]; then
              thmE="NA"
              H="NA"
              G="NA"
-             nimag=0
+             nimag="NA"
           fi
 	  
 	  echo "$(pwd)/$j $scf $EZPE $thmE $H $G $nbasis Nimag=$nimag"
@@ -78,29 +79,29 @@ else
       if grep -q "ORCA TERMINATED NORMALLY" $i; then
         # check further: is it a finished optimization or single point calculation or energy+freq calculation.
         if ( grep -q "Geometry Optimization Run" $i && grep -q "THE OPTIMIZATION HAS CONVERGED" $i ) || grep -q "Single Point Calculation" $i || grep -q "Energy+Gradient Calculation" $i; then
-          if ( grep -q "Method          .... GFN2-xTB" $i/orca.out) ; then 
-	      scf=$(grep "Total Energy       :" $i/orca.out | tail -1 | awk '{print $4}')
-	  elif ( grep -q "Dispersion correction" $i/orca.out) ; then
-	      scf=$(grep "FINAL SINGLE POINT ENERGY" $i/orca.out | tail -1 | awk '{print $5}')
+          if ( grep -q "Method          .... GFN2-xTB" $i ) ; then 
+	      scf=$(grep "Total Energy       :" $i | tail -1 | awk '{print $4}')
+	  elif ( grep -q "Dispersion correction" $i ) ; then
+	      scf=$(grep "FINAL SINGLE POINT ENERGY" $i | tail -1 | awk '{print $5}')
 	  else
-	      scf=$(grep "Total energy after final integration" $i/orca.out | tail -1 | awk '{print $7}')
+	      scf=$(grep "Total energy after final integration" $i | tail -1 | awk '{print $7}')
 	  fi
-          if grep -q "VIBRATIONAL FREQUENCIES" "$i/orca.out"; then
+          if grep -q "VIBRATIONAL FREQUENCIES" $i && [ "$(grep -n 'VIBRATIONAL FREQUENCIES' $i | tail -1 | awk -F: '{print $1}')" -gt "$(grep -n 'OPTIMIZATION RUN DONE' $i | awk -F: '{print $1}')" ]; then
               ZPE=$(grep "Zero point energy" $i | tail -1 | awk '{print $5}')
               EZPE=$(echo $scf + $ZPE | bc)
               thmE=$(grep "Total thermal energy" $i | tail -1 | awk '{print $5}')
               H=$(grep "Total Enthalpy" $i | tail -1 | awk '{print $4}')
               G=$(grep "Final Gibbs free energy" $i | tail -1 | awk '{print $6}')
               #nimag=$(grep "imaginary mode" $i | wc -l)
+	      nimag=$(tac $i | grep -m 1 -B 30 "VIBRATIONAL FREQUENCIES" | grep "imaginary mode" | wc -l)
 	  else
 	     ZPE=0
              EZPE="NA"
              thmE="NA"
              H="NA"
              G="NA"
-             nimag=0
+             nimag="NA"
           fi
-	  nimag=$(tac $i | grep -m 1 -B 30 "VIBRATIONAL FREQUENCIES" | grep "imaginary mode" | wc -l)
 	  echo "$(pwd)/$j $scf $EZPE $thmE $H $G $nbasis Nimag=$nimag"
         fi
       fi

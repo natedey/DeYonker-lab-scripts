@@ -129,6 +129,10 @@ checkdirstate () {
       sed -i "\#$1#d" check_${2}_$state.txt
       echo "$1 - $nmode imaginary modes, first mode is $firstmode, but modify_internal not added yet!" >> check_tsopt_tsmodegone.txt; state="tsmodegone"
      fi
+    # DAW 2026-09-17: additional ts mode filter - magnitude below 100 taken care of above, now putting 100-250i into check_manually
+    elif [[ "$2" == "tsopt" ]] && (( $(echo "$firstmode > -250" | bc -l) )); then
+     sed -i "\#$1#d" check_${2}_$state.txt
+     echo "$1 - $nmode imaginary modes, first mode is $firstmode, structure is probably bad" >> check_tsopt_CHECK_MANUALLY.txt; state="CHECK_MANUALLY"
     elif [[ "$2" == "tsopt" ]] && [[ "$state" == "done" ]] && [[ "$nmode" != 1 ]]; then
      if [[ "$tightopt" == 1 ]]; then
       # tsopt + done + >1 imaginary modes + tightopt on = move to check_manually

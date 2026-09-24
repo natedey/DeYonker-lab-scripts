@@ -48,7 +48,7 @@ if [ -z "$1" ] || [[ "$1" == "list" ]]; then
           nbasis=$(grep -a -m 1 "Number of basis functions" $i/orca.out | awk '{print "="$NF}')
           # check that there are vib frequencies and the last vib block is AFTER the optimization run (grep -n gets line numbers)
           # otherwise don't include zpe/thmE/H/G bc they aren't present or aren't correct
-          if grep -q "VIBRATIONAL FREQUENCIES" $i/orca.out && [ "$(grep -n 'VIBRATIONAL FREQUENCIES' $i/orca.out | tail -1 | awk -F: '{print $1}')" -gt "$(grep -n 'OPTIMIZATION RUN DONE' $i/orca.out | awk -F: '{print $1}')" ]; then
+          if grep -q "VIBRATIONAL FREQUENCIES" $i/orca.out && ( grep -qv "Geometry Optimization Run" $i/orca.out || [ "$(grep -n 'VIBRATIONAL FREQUENCIES' $i/orca.out | tail -1 | awk -F: '{print $1}')" -gt "$(grep -n 'OPTIMIZATION RUN DONE' $i/orca.out | awk -F: '{print $1}')" ] ); then
 	      ZPE=$(grep "Zero point energy" $i/orca.out | tail -1 | awk '{print $5}')
               EZPE=$(echo $scf + $ZPE | bc)
               thmE=$(grep "Total thermal energy" $i/orca.out | tail -1 | awk '{print $5}')
@@ -86,7 +86,7 @@ else
 	  else
 	      scf=$(grep "Total energy after final integration" $i | tail -1 | awk '{print $7}')
 	  fi
-          if grep -q "VIBRATIONAL FREQUENCIES" $i && [ "$(grep -n 'VIBRATIONAL FREQUENCIES' $i | tail -1 | awk -F: '{print $1}')" -gt "$(grep -n 'OPTIMIZATION RUN DONE' $i | awk -F: '{print $1}')" ]; then
+          if grep -q "VIBRATIONAL FREQUENCIES" $i && ( grep -qv "Geometry Optimization Run" $i || [ "$(grep -n 'VIBRATIONAL FREQUENCIES' $i | tail -1 | awk -F: '{print $1}')" -gt "$(grep -n 'OPTIMIZATION RUN DONE' $i | awk -F: '{print $1}')" ] ); then
               ZPE=$(grep "Zero point energy" $i | tail -1 | awk '{print $5}')
               EZPE=$(echo $scf + $ZPE | bc)
               thmE=$(grep "Total thermal energy" $i | tail -1 | awk '{print $5}')

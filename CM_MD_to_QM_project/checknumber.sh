@@ -7,6 +7,7 @@
 
 done_total=0
 all_total=0
+excluded_total=0
 
 for d in $(cat to-collect.txt); do
     if [ ! -d "$d" ]; then
@@ -15,19 +16,29 @@ for d in $(cat to-collect.txt); do
 
     line=$(cd "$d" &&  cm-md-status.py | tail -n 1)
 
-    echo "number: $d --> $line"
 
     done_count=$(echo "$line" | grep -oE '[0-9]+' | sed -n '1p')
     total_count=$(echo "$line" | grep -oE '[0-9]+' | sed -n '2p')
+    excluded=$(echo "$line" | grep -oE '[0-9]+' | sed -n '3p')
+
 
     if [ -n "$done_count" ] && [ -n "$total_count" ]; then
         done_total=$((done_total + done_count))
         all_total=$((all_total + total_count))
-        echo "$d : $done_count out of $total_count"
+        echo "$d "
     else
         echo "$d : could not read status"
     fi
+    if [ -n "$excluded" ] && [ -n "$total_count" ]; then
+        excluded_total=$((excluded_total + excluded))
+    fi
+
 done
+
+not_completed=$((all_total-($done_total + $excluded_total)))
 
 echo
 echo "$done_total out of $all_total models fully done"
+echo "$excluded_total out of $all_total models  excluded"
+echo "$not_completed jobs not completed"
+

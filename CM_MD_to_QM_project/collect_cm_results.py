@@ -72,7 +72,7 @@ def get_probe_hbonds(pdbfile):
 def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,modeltype):
     # list of things to collect that will become dataframe column names. defining this first makes it easier to keep track of what we're collecting/organise order of df columns from the start
     # how I've organised the list: most basic/important stuff first (model/size/charge/free energies), then structural stuff (dists/rmsds/movement during opt), then individual struc energies
-    vals = ['fnum', 'ligand', 'size', 'charge', 'done', 'reactant', 'product', 'ts_type', 'dGa', 'dGr', 
+    vals = ['fnum', 'ligand', 'size', 'charge', 'done', 'reactant', 'product', 'ts_type', 'dGa', 'dGr','dHa', 'dHr', 
             'ts_C1-C9_dist', 'ts_C5-O7_dist', 'r_C1-C9_dist', 'r_C5-O7_dist', 'p_C1-C9_dist', 'p_C5-O7_dist', 'r_C1-C5-O7-C9_dihedral', 'p_C5-C1-C9-O7_dihedral',
             'rms_tmp-init_all', 'rms_tmp-init_lig', 'rms_tmp-init_prot', 'rms_tmp-init_wat', 'rms_guess-ts_all','rms_guess-ts_lig', 'rms_guess-ts_prot', 'rms_guess-ts_wat', 'rms_r-init_all', 'rms_r-init_lig', 'rms_r-init_prot', 'rms_r-init_wat',
             'rms_r-tmp_all', 'rms_r-tmp_lig', 'rms_r-tmp_prot', 'rms_r-tmp_wat',
@@ -85,8 +85,8 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
             'hb_HO5_ts_fg', 'hb_HO5_ts_dist', 'hb_HO5_r_fg', 'hb_HO5_r_dist', 'hb_HO5_p_fg', 'hb_HO5_p_dist',
             'hb_ts_lig-Arg63', 'hb_r_lig-Arg63', 'hb_p_lig-Arg63', 'hb_ts_lig-Arg7', 'hb_r_lig-Arg7', 'hb_p_lig-Arg7',
             'ts_path', 'ts_elE', 'ts_elE+ZPE', 'ts_thrmE', 'ts_H', 'ts_G', 'ts_Nbasis', 'ts_Nimag', 'ts_Gkcal', 'ts_imagmodes',
-            'r_path', 'r_elE', 'r_elE+ZPE', 'r_thrmE', 'r_H', 'r_G', 'r_Nbasis', 'r_Nimag', 'r_Gkcal', 'r_imagmodes',
-            'p_path', 'p_elE', 'p_elE+ZPE', 'p_thrmE', 'p_H', 'p_G', 'p_Nbasis', 'p_Nimag', 'p_Gkcal', 'p_imagmodes',
+            'r_path', 'r_elE', 'r_elE+ZPE', 'r_thrmE', 'r_H', 'r_G', 'r_Nbasis', 'r_Nimag', 'r_Hkcal', 'r_Gkcal', 'r_imagmodes',
+            'p_path', 'p_elE', 'p_elE+ZPE', 'p_thrmE', 'p_H', 'p_G', 'p_Nbasis', 'p_Nimag', 'p_Hkcal','p_Gkcal', 'p_imagmodes',
             'init_elE', 'dE_r-init']
     extractvals = ['path', 'elE', 'elE+ZPE', 'thrmE', 'H', 'G', 'Nbasis', 'Nimag'] # labels for output of extract_orca.sh, match the ts/react/prod prefixed values above
     fdata = {}      # dictionary to collect all data into
@@ -324,32 +324,44 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
             Gr = False
             Gp = False
             Ginit = False
+            Hts = False
+            Hr = False
+            Hp = False
             for line in extracted:
                 line = line.split()
                 dirsplit = [d for d in line[0].split('/') if d]
                 gkcal = float(line[5])*627.5096
+                hkcal = float(line[4])*627.5096
                 if dirsplit[-1] == 'tsopt':
                     # for each value in line, get descriptor from extractvals list and use to add to data dict
                     for i,v in enumerate(line):
                         fdata[f][f'ts_{extractvals[i]}'] = v
                     fdata[f]['ts_Gkcal'] = str(gkcal)
+                    fdata[f]['ts_Hkcal'] = str(hkcal)
                     Gts = gkcal
+                    Hts = hkcal
                     fdata[f]['ts_imagmodes'] = get_orca_imag_modes('orca.out')
                 elif dirsplit[-1] == fdata[f]['reactant']:
                     for i,v in enumerate(line):
                         fdata[f][f'r_{extractvals[i]}'] = v
                     fdata[f]['r_Gkcal'] = str(gkcal)
+                    fdata[f]['r_Hkcal'] = str(hkcal)
                     Gr = gkcal
+                    Hr = hkcal
                     fdata[f]['r_imagmodes'] = get_orca_imag_modes(dirsplit[-1]+'/orca.out')
                 elif dirsplit[-1] == fdata[f]['product']:
                     for i,v in enumerate(line):
                         fdata[f][f'p_{extractvals[i]}'] = v
                     fdata[f]['p_Gkcal'] = str(gkcal)
+                    fdata[f]['p_Hkcal'] = str(hkcal)
                     Gp = gkcal
+                    Hp = hkcal
                     fdata[f]['p_imagmodes'] = get_orca_imag_modes(dirsplit[-1]+'/orca.out')
             if Gts and Gr and Gp:   # second part of failsafe: only calculate deltaGs if all G values collected properly (no False placeholders left)
                 fdata[f]['dGa'] = str(round(Gts - Gr,2))
                 fdata[f]['dGr'] = str(round(Gp - Gr,2))
+                fdata[f]['dHa'] = str(round(Hts - Hr,2))
+                fdata[f]['dHr'] = str(round(Hp - Hr,2))
                 fdata[f]['done'] = 'Y'
             else:
                 errorlog.append(f'{f} - extract-orca.sh output not parsed as expected, please check outputs!')

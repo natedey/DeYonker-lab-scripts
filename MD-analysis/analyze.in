@@ -38,6 +38,10 @@ rms Ch1CORhv :128&!@H= reference out frame_rms.dat
 rms Ch2CORhv :256&!@H= reference out frame_rms.dat
 rms Ch3CORhv :384&!@H= reference out frame_rms.dat
 
+# DAW note Nov 2026: each rms command realigns the frames so at this point the structures are aligned based on the C/B ligand
+# atomicfluct commands use existing alignment => residues close to the C/B ligand will appear to move less than ones further away
+# need to realign across all chains "equally" to get properly comparable rmsfs!!!
+align :1-384 reference
 atomicfluct rmsfCh1 out res_rmsf.dat :1-127 byres
 atomicfluct rmsfCh2 out res_rmsf.dat :129-255 byres
 atomicfluct rmsfCh3 out res_rmsf.dat :257-383 byres

@@ -28,6 +28,7 @@ from probe2rins import atom_split
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 
 ### quick function to get list of all imag modes for tsopts/ircs ###
 # noted in extract-orca.sh and check_cm_jobs.sh but reminder that we have to get the final imag modes this way to avoid also grabbing stuff from partway (re)calc_hess steps
@@ -67,13 +68,40 @@ def get_probe_hbonds(pdbfile):
         else:
             hb_pairs[ordered_pair] += 1
     return hb_pairs
+def calc_c1_c9_normal_angle(obj_name, ligid):
+    c1 = cmd.get_coords(f'{obj_name}///{ligid}/C1', 1)[0]
+    c2 = cmd.get_coords(f'{obj_name}///{ligid}/C2', 1)[0]
+    c6 = cmd.get_coords(f'{obj_name}///{ligid}/C6', 1)[0]
+    c9 = cmd.get_coords(f'{obj_name}///{ligid}/C8', 1)[0]
+    o7 = cmd.get_coords(f'{obj_name}///{ligid}/O7', 1)[0]
+
+    v1 = c2 - c1 # Vector 1 will be pointing towards C1-C2 bond
+    v2 = c6 - c1 # Vector 2 will be pointing towards C6-C1 bond
+
+    vectorial_product = np.cross(v1, v2)
+    normal = vectorial_product / np.linalg.norm(vectorial_product) # we make the vectorial product being 1
+
+    if np.dot(normal, o7 - c1) < 0: # we guarantee that it is pointing in the direction of C9
+        normal = - normal
+    #-----------Adding the other vector---------------#
+    
+    vector_attack = c9 - c1 
+    v_attack = vector_attack / np.linalg.norm(vector_attack)
+
+    #---------------We calculate the angle----------#
+
+    cos_theta = np.clip(np.dot(normal, v_attack), -1.0, 1.0)
+    angle = np.degrees(np.arccos(cos_theta))
+
+    return round(float(angle), 2)
+
 
 ### main results processing function ###
 def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,modeltype):
     # list of things to collect that will become dataframe column names. defining this first makes it easier to keep track of what we're collecting/organise order of df columns from the start
     # how I've organised the list: most basic/important stuff first (model/size/charge/free energies), then structural stuff (dists/rmsds/movement during opt), then individual struc energies
     vals = ['fnum', 'ligand', 'size', 'charge', 'done', 'reactant', 'product', 'ts_type', 'dGa', 'dGr','dHa', 'dHr', 
-            'ts_C1-C9_dist', 'ts_C5-O7_dist', 'r_C1-C9_dist', 'r_C5-O7_dist', 'p_C1-C9_dist', 'p_C5-O7_dist', 'r_C1-C5-O7-C9_dihedral', 'p_C5-C1-C9-O7_dihedral',
+            'ts_C1-C9_dist', 'ts_C5-O7_dist', 'r_C1-C9_dist', 'r_C5-O7_dist', 'p_C1-C9_dist', 'p_C5-O7_dist', 'r_C1-C5-O7-C9_dihedral', 'p_C5-C1-C9-O7_dihedral','r_C6-C5-O7-C8_dihedral','r_C5-O7-C8-C9_dihedral','r_C1_C9_normal_angle',
             'rms_tmp-init_all', 'rms_tmp-init_lig', 'rms_tmp-init_prot', 'rms_tmp-init_wat', 'rms_guess-ts_all','rms_guess-ts_lig', 'rms_guess-ts_prot', 'rms_guess-ts_wat', 'rms_r-init_all', 'rms_r-init_lig', 'rms_r-init_prot', 'rms_r-init_wat',
             'rms_r-tmp_all', 'rms_r-tmp_lig', 'rms_r-tmp_prot', 'rms_r-tmp_wat',
             'rms_ts-r_all', 'rms_ts-r_lig', 'rms_ts-r_prot', 'rms_ts-r_wat', 'rms_p-r_all', 'rms_p-r_lig', 'rms_p-r_prot', 'rms_p-r_wat', 'rms_ts-p_all', 'rms_ts-p_lig', 'rms_ts-p_prot', 'rms_ts-p_wat',
@@ -202,6 +230,8 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
             # get specific dihedral for reactant and product
             fdata[f]['r_C1-C5-O7-C9_dihedral'] = str(round(cmd.get_dihedral(f'r///{ligid}/C1',f'r///{ligid}/C5',f'r///{ligid}/O7',f'r///{ligid}/C9'),2))
             fdata[f]['p_C5-C1-C9-O7_dihedral'] = str(round(cmd.get_dihedral(f'p///{ligid}/C5',f'p///{ligid}/C1',f'p///{ligid}/C9',f'p///{ligid}/O7'),2))
+            fdata[f]['r_C6-C5-O7-C8_dihedral'] = str(round(cmd.get_dihedral(f'r///{ligid}/C6',f'r///{ligid}/C5',f'r///{ligid}/O7',f'r///{ligid}/C8'),2))
+            fdata[f]['r_C5-O7-C8-C9_dihedral'] = str(round(cmd.get_dihedral(f'r///{ligid}/C5',f'r///{ligid}/O7',f'r///{ligid}/C8',f'r///{ligid}/C9'),2))
             # define pairs of strucs and then compare them: rmsds and the biggest difference in position ("maxmove") for any individual atom
             # DAW 2026-08-20: added comparison between template and optimised reactant for batch model paper
             for i in [('tmp','init'),('guess','ts'),('ts','r'),('p','r'),('ts','p'),('r','init'),('r','tmp')]:
@@ -260,6 +290,11 @@ def process_cm_results(homedir,dirlabel,framedirs,tsoptdone,irc1done,irc2done,mo
 
             ##########################################################################################
             ###                   ADD NEW COMMANDS (EG DISTANCES, ANGLES) HERE                     ###            
+            
+            #Caculating the attack angle degree between C1-C9 using numpy ; see more in calc_c1_c9_normal_angle defined function.
+
+            for i in ['r']:
+                fdata[f][f'{i}_C1_C9_normal_angle'] = str(calc_c1_c9_normal_angle(i, ligid))
 
             # look for specific hbonds in the probe hbonds lists for each structure
             for i in ['ts','r','p']:
